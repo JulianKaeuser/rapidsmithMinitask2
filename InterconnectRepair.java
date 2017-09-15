@@ -8,6 +8,8 @@ import edu.byu.ece.rapidSmith.design.Pin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+
 /**
  * Created by Julian Käuser on 14.09.17.
  */
@@ -28,6 +30,11 @@ public class InterconnectRepair {
     }
 
     private Boolean checkIfSourceReachable(Pin sinkPin, Pin sourcePin){
+        // pin -> title
+        ArrayList<PIP> A = sourcePin.getTile().getPIPs();
+        ArrayList<PIP> B = sinkPin.getTile().getPIPs();
+        logger.info("in position");
+        // PIPs -> PIN
         //sinkPin.
         return false;
     }
