@@ -21,21 +21,26 @@ public class InterconnectRepair {
     }
 
     public Design fixDesign(Design brokenDesign){
-        logger.info("Testz");
-        brokenDesign.getNetMap();
+        for (Net aNet : brokenDesign.getNets()){
+            this.checkIfBroken(aNet);
+        }
         return brokenDesign;
     }
 
-    private void PinToPin (Pin aPin){
-      //  PIP aPip;
-      //  aPin.getConnectedForward();
-
-     //   aPip.getEndWireName();
+    private Boolean checkIfSourceReachable(Pin sinkPin, Pin sourcePin){
+        return false;
     }
 
-    //TODO: rückgabetyp zu was sinnvollen ändern wie PIP oder so
     private Boolean checkIfBroken(Net net){
-        return true;
+        Pin sourcePin = net.getSource();
+        for (Pin aPin : net.getPins()) {
+            if (!aPin.isOutPin()) { //wenn keine Quelle, d.h. es gibt einen outpin und N inpins. Achtung, das ist verwierend notiert!
+                if (!aPin.isDeadEnd()) { //und kein bewusster dead-end, was eigentlich NICHT vorkommen darf das ein Ausgang ein deadend ist aber es könnte sonderfälle geben
+                    if( this.checkIfSourceReachable(aPin, sourcePin) == false)
+                        return true; //kapput
+                }
+            }
+        }
+        return false; // nicht kapput
     }
-
 }
