@@ -213,10 +213,12 @@ public class Potential {
     }
 
     /**
-     * Literally spoken: connects the two potentials electrically; this means, they are then the same potential
+     * Literally spoken: connects the two potentials electrically; this means, they are then the same potential.
+     * If the potential should be fused with itself (incorrect bevhaviour), null is returned
      * @param other
      */
     private Potential fuse(Potential other){
+        if (other.equals(this)) return null;
             for (Integer otherWire : other.getWires()){
                 wires.add(otherWire);
             }
@@ -240,13 +242,15 @@ public class Potential {
      * connects this potential with the given potential, by setting/including the given pip.
      * This operation fails if not this and the other potential to be connected are only separated by at most one pip
      * (else, a more routing-like connection would have to be made). In this case, null is returned.
-     * Null is also returned if the nets are actually different (if one net is null, this is ok)
+     * Null is also returned if the nets are actually different (if one net is null, this is ok), or if the potential
+     * other equals this potential (cannot fuse itself)
      * @param other
      * @param pip
      * @assert this.net != other.net
      * @return the activated pip (was the parameter)
      */
     public PIP fuse(Potential other, PIP pip){
+        if (other.equals(this)) return null;
         if (!this.adjacentPIPs.contains(pip) || !other.getAdjacentPIPs().contains(pip)){
             // pip is not in both connectable pip sets, i.e. common of both potentials
             return null;
@@ -270,8 +274,7 @@ public class Potential {
             pips.clear();
             adjacentPIPs.clear();
             underlyingPIPTiles.clear();
-
-
+        //TODO check if all dependencies are removed
         }
 
     /**
@@ -279,7 +282,7 @@ public class Potential {
      * the "borders" (i.e. pips)
      */
     private void expandAllWires(){
-        design.getDevice().
+        //TODO implement this method based on tiles?
     }
 
     /**
