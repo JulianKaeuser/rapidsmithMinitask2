@@ -10,8 +10,11 @@ import edu.byu.ece.rapidSmith.device.WireEnumerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import edu.byu.ece.rapidSmith.device.Tile;
+import org.w3c.dom.html.HTMLTableColElement;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 
 /**
  * Created by Julian Käuser on 14.09.17.
@@ -23,6 +26,9 @@ public class InterconnectRepair {
     private Device device;
     private WireEnumerator wireEnum;
     private Boolean isFixed = false; //Flag die wir nutzen können um die Reperatur ggf. zu überspringen
+
+
+    private Collection<Potential> potentials;
     /*
     This class holds the minitask 2 invocation methods etc. Created mainly for testing reasons
      */
