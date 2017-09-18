@@ -279,7 +279,7 @@ public class Potential {
      * the "borders" (i.e. pips)
      */
     private void expandAllWires(){
-
+        design.getDevice().
     }
 
     /**
@@ -383,5 +383,18 @@ public class Potential {
     }
 
 
+    /**
+     * Reveals if the two Pips are on the same potential
+     * @param design
+     * @param a
+     * @param b
+     * @return
+     */
+    public static boolean isSamePotential(Design design, PIP a, PIP b){
+        for (Potential p : allPotentials.get(design)){
+            if (p.getPIPs().contains(a) && p.getPIPs().contains(b)) return true;
+            return false;
+        }
+    }
 
 }
