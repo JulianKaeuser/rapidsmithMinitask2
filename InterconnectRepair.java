@@ -88,6 +88,27 @@ public class InterconnectRepair {
         return false;
     }
 */
+
+/*
+Start pin -> start wire
+start wire -> start pip
+A = start pip
+End pin -> end wire
+end wire -> end pip
+B = end pip
+
+Breitensuche prüfen ob pips verbinung haben
+
+Wenn So ist:
+    Fertig :D
+
+Wenn NICHT:
+    Breitsuche von bieden Richtungen und jedes Pip was möglicherweise mit dem Pip aus der anderen Richtung verbindbar ist verbinden wenn und nur dann wenn die Verbindung NICHT ein anderes pip noch mit integriert.
+    Wenn Geht:
+        Problem gelöst
+    Wenn Nicht:
+        Kapput, ist halt so -> route bitte weil schneller
+ */
     private Boolean checkIfSourceReachable(Pin sinkPin, Pin sourcePin){
         Net net = sourcePin.getNet();
         Tile tile = sourcePin.getTile();
