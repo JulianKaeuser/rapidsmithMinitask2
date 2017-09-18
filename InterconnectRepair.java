@@ -5,8 +5,11 @@ import edu.byu.ece.rapidSmith.design.Design;
 import edu.byu.ece.rapidSmith.design.Net;
 import edu.byu.ece.rapidSmith.design.PIP;
 import edu.byu.ece.rapidSmith.design.Pin;
+import edu.byu.ece.rapidSmith.device.Device;
+import edu.byu.ece.rapidSmith.device.WireEnumerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import edu.byu.ece.rapidSmith.device.Tile;
 
 import java.util.ArrayList;
 
@@ -15,28 +18,88 @@ import java.util.ArrayList;
  */
 public class InterconnectRepair {
     private static final Logger logger = LoggerFactory.getLogger(MoveModulesEverywhere.class);
+
+    private Design brokenDesign;
+    private Device device;
+    private WireEnumerator wireEnum;
+    private Boolean isFixed = false; //Flag die wir nutzen können um die Reperatur ggf. zu überspringen
     /*
     This class holds the minitask 2 invocation methods etc. Created mainly for testing reasons
      */
-    public InterconnectRepair(){
+    public InterconnectRepair(Design brokenDesign){
+        this.brokenDesign = brokenDesign; //das merken wir uns
+        this.device = brokenDesign.getDevice(); //das sind nur hilfs variablen
+        this.wireEnum = this.device.getWireEnumerator();
 
+        this.isFixed = false;
     }
 
-    public Design fixDesign(Design brokenDesign){
-        for (Net aNet : brokenDesign.getNets()){
+    public Design fixDesign(){
+        for (Net aNet : this.brokenDesign.getNets()){
             this.checkIfBroken(aNet);
         }
-        return brokenDesign;
+        return this.brokenDesign;
+    }
+
+    private PIP getPIPfromPin(Pin pin){
+        Net net = pin.getNet();
+        int pinWire = this.device.getPrimitiveExternalPin(pin);
+        for (PIP pip : net.getPIPs()){
+            if (pip.getEndWire() == pinWire){ //ist das richtigrum ?
+                return pip;
+            }
+            if (pip.getStartWire()== pinWire){ //ich hoffe das wir auf die weise keinen Fehler machen
+                return pip;
+            }
+        }
+        return null;
+    }
+
+    /*
+    Ermittelt ein PIP ausgehentn von einem anderen PIP. Da es mehere geben kann muss immer das vorige PIP d.h. das nicht zu ermittelde mitgeben werden.
+    Außerdem brauchen wir ein net da das Framework das sonst nicht einfach biten kann
+     */
+    private PIP getPIPfromPIP(Net net, PIP currentPip, PIP previousPip){
+        for (PIP aPip : net.getPIPs()){
+            if(aPip.getEndWire() == currentPip.getStartWire()){
+                if(aPip != previousPip)
+                    return aPip;
+            }
+            if(aPip.getStartWire()== currentPip.getEndWire()){
+                if(aPip != previousPip)
+                    return aPip;
+            }
+        }
+        return null;
     }
 
     private Boolean checkIfSourceReachable(Pin sinkPin, Pin sourcePin){
-        // pin -> title
-        ArrayList<PIP> A = sourcePin.getTile().getPIPs();
-        ArrayList<PIP> B = sinkPin.getTile().getPIPs();
-        logger.info("in position");
-        // PIPs -> PIN
-        //sinkPin.
-        return false;
+        Net net = sourcePin.getNet();
+        Tile tile = sourcePin.getTile();
+        int sourceWire = this.device.getPrimitiveExternalPin(sourcePin);
+        //Sink to Source weil es nur eine Source gibt
+        PIP sinkPip = this.getPIPfromPin(sinkPin);
+        PIP prevPip = sinkPip;
+        PIP nextPip = this.getPIPfromPIP(net, sinkPip, prevPip);
+        while(!(nextPip.getEndWire() == sourceWire || nextPip.getStartWire() == sourceWire)){ //sollange wir nicht noch irgendwie am Pin sind
+            if(nextPip == null) { //wenn wir absolut nicht durch kommen weil kein pip mehr
+                logger.error("Pip wires broken");
+                return false;
+            }
+            nextPip = this.getPIPfromPIP(net, nextPip, prevPip);
+        }
+        logger.info("Nice");
+
+        //Das folgende geht NICHT weil die das nicht implementiert haben d.h. nicht richtig
+        //   logger.info(this.device.getNodeFromPin(sourcePin).getSinkPin().toString());
+        /*
+        if (this.device.getNodeFromPin(sourcePin).getSinkPin().toString() == sinkPin.toString()){
+            logger.info("great Success");
+        }else {
+            logger.info("even greater Failure");
+        }
+        */
+        return true; //wir sind erfolgreich einmal durchgelaufen
     }
 
     private Boolean checkIfBroken(Net net){
