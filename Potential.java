@@ -190,15 +190,12 @@ public class Potential {
             return null;
         }
         HashSet<Potential> set = new HashSet<Potential>();
-        Potential a, b = null;
         for (Potential p : allPotentials.get(design)){
             if (p.getAdjacentPIPs().contains(pip)){
-                a = p;
-                set.add(a);
+                set.add(p);
             }
-            if(a!=null && !p.equals(a) && p.getAdjacentPIPs().contains(pip)){
-                b=p;
-                set.add(b);
+            if(!set.contains(p) && p.getAdjacentPIPs().contains(pip)){
+                set.add(p);
             }
         }
     }
