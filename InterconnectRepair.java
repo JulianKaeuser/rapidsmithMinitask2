@@ -73,6 +73,21 @@ public class InterconnectRepair {
         return null;
     }
 
+    private Boolean checkIfPIP(int wire){
+        return this.wireEnum.isPIPWire(wire);
+    }
+/*
+    private Boolean checkIfPIPon(PIP pip){
+        return false;
+    }
+
+    private Boolean checkIfWireOkay(int wire){
+        if(checkIfPIP(wire)){
+            checkIfPIPon(PIP)
+        }
+        return false;
+    }
+*/
     private Boolean checkIfSourceReachable(Pin sinkPin, Pin sourcePin){
         Net net = sourcePin.getNet();
         Tile tile = sourcePin.getTile();
@@ -81,12 +96,16 @@ public class InterconnectRepair {
         PIP sinkPip = this.getPIPfromPin(sinkPin);
         PIP prevPip = sinkPip;
         PIP nextPip = this.getPIPfromPIP(net, sinkPip, prevPip);
+        if(nextPip == null) { //wenn wir absolut nicht durch kommen weil kein pip mehr
+            logger.error("Pip wires broken");
+            return false;
+        }
         while(!(nextPip.getEndWire() == sourceWire || nextPip.getStartWire() == sourceWire)){ //sollange wir nicht noch irgendwie am Pin sind
+            nextPip = this.getPIPfromPIP(net, nextPip, prevPip);
             if(nextPip == null) { //wenn wir absolut nicht durch kommen weil kein pip mehr
                 logger.error("Pip wires broken");
                 return false;
             }
-            nextPip = this.getPIPfromPIP(net, nextPip, prevPip);
         }
         logger.info("Nice");
 
