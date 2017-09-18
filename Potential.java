@@ -161,6 +161,12 @@ public class Potential {
 
         }
 
+    public boolean isSignificant(){
+        if(pips.isEmpty()) return true;
+        return false;
+    }
+
+
 
     /**
      * Returns the potential of this wire. If no potential is defined yet, null is returned.
@@ -199,4 +205,8 @@ public class Potential {
             }
         }
     }
+
+
+
+
 }
