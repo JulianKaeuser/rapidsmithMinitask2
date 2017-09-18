@@ -206,6 +206,10 @@ public class Potential {
         }
     }
 
+    public static boolean isSignificantPotential(Potential other){
+        return other.isSignificant();
+    }
+
 
 
 
