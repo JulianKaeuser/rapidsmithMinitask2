@@ -251,6 +251,9 @@ public class Potential {
         }
 
     /**
+     * NEVER actively use this method! It is only there to be called from the method DesignPotentials.fuse. We could not
+     * make up how to solve this properly (public, protected, private, no modifier are not the right solutions)
+     *
      * connects this potential with the given potential, by setting/including the given pip.
      * This operation fails if not this and the other potential to be connected are only separated by at most one pip
      * (else, a more routing-like connection would have to be made). In this case, null is returned.
@@ -290,9 +293,11 @@ public class Potential {
      */
     private void expandAll(){
         //TODO implement this method based on wires/tiles/whatever offers the best methods
-        Pin pin;
-        //pin.
-        pin.getNet().
+        if (!pins.isEmpty()){
+            for (Pin pin : pins){
+                pin.getInstance().
+            }
+        }
 
     }
 
