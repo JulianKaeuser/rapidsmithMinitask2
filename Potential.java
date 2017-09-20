@@ -18,45 +18,48 @@ import java.util.HashSet;
  */
 public class Potential {
 
-        /*
-        A Map which holds all potentials of all designs known in this runtime. Make sure that everytime a
-        Design is finished with the processing, the function clearPotentials is called so that unnecessary
-        memory allocation is avoided, if the potentials are not used again.
-         */
-        static HashMap<Design, Collection<Potential>> allPotentials;
-
 
         /* #####################################################
                        constructor(s)
         ######################################################## */
 
-    /**
-     * Constructor with design only; potential is undefined and therefore only internal use
-     * @param design
-     */
-        private void init(Design design) {
-            wires = new HashSet<Integer>();
-            pips = new HashSet<PIP>();
-            adjacentPIPs = new HashSet<PIP>();
-            this.design = design;
-            this.underlyingPIPTiles = new HashSet<Tile>();
-            design = design;
-            if (allPotentials.get(design) == null) {
-                allPotentials.put(design, new HashSet<Potential>());
 
-            }
-                allPotentials.get(design).add(this);
-        }
+    /**
+     * Constructor based on pin
+     * @param designWrapper
+     * @param startPin
+     */
+    public Potential(DesignPotentials designWrapper, Pin startPin){
+        wires = new HashSet<Integer>();
+        pips = new HashSet<PIP>();
+        adjacentPIPs = new HashSet<PIP>();
+        pins = new HashSet<Pin>();
+
+        //TODO find out how to get from pin to wire
+        wires.add(null);
+        pins.add(startPin);
+        net=startPin.getNet();
+        this.designWrapper = designWrapper;
+        this.design = designWrapper.getDesign();
+        this.expandAll();
+    }
 
     /**
      * Defines the first point of the Potential and therefore the first "wire tree"
-     * @param design
-     * @param anchor
+     * @param startWire the first piece of metal, as wire
      */
-    public Potential(Design design, AnchorPoint anchor){
-        init(design);
-        wires.add(anchor.getAnchorPointAsWire());
-        net=anchor.getAnchorPointAsNet();
+    public Potential(DesignPotentials designWrapper, int startWire){
+        wires = new HashSet<Integer>();
+        pips = new HashSet<PIP>();
+        adjacentPIPs = new HashSet<PIP>();
+        pins = new HashSet<Pin>();
+
+        wires.add(startWire);
+        //TODO find out how to get from wire to net etc
+        net=null;
+
+        this.designWrapper = designWrapper;
+        this.design = designWrapper.getDesign();
         this.expandAll();
 
     }
@@ -66,6 +69,9 @@ public class Potential {
         // ###############################################
         //          non-static attributes
         // ###############################################
+
+        // The DEsignPotentials pobject which holds this potential
+        private DesignPotentials designWrapper;
         // all wires with this potential
         private Collection<Integer> wires;
         // the PIPs of this potential line
@@ -73,19 +79,13 @@ public class Potential {
         // all pips which can connect this potential to another potential (=fuse)
         private Collection<PIP> adjacentPIPs;
 
-        /*
-           Should work
-         */
-        private Collection<Tile> underlyingPIPTiles;
+        private Collection<Pin> pins;
 
         // The design where this potential is embedded
         private Design design;
 
         // the net of this potential
         private Net net;
-
-        // Whether class has been initialized with a design
-        private static HashMap<Design,Boolean> isInitialized;
 
 
 
@@ -96,35 +96,35 @@ public class Potential {
 
 
 
-        /**
-         * Returns the wires
-         * @return
-         */
-        public Collection<Integer> getWires(){
+    /**
+     * Returns the wires
+     * @return
+     */
+    public Collection<Integer> getWires(){
             return wires;
         }
 
-        /**
-         * Sets the wires
-         * @param wires
-         */
-        public void setWires(Collection<Integer> wires){
+    /**
+     * Sets the wires
+     * @param wires
+     */
+    public void setWires(Collection<Integer> wires){
             this.wires = wires;
         }
 
-        /**
-         * Sets the pips
-         * @param pips
-         */
-        public void setPips(Collection<PIP> pips){
+    /**
+     * Sets the pips
+     * @param pips
+     */
+    public void setPips(Collection<PIP> pips){
             this.pips = pips;
         }
 
-        /**
-         * Returns the pips
-         * @return
-         */
-        public Collection<PIP> getPIPs(){
+    /**
+     * Returns the pips
+     * @return
+     */
+    public Collection<PIP> getPIPs(){
             return this.pips;
         }
 
@@ -138,10 +138,11 @@ public class Potential {
         }
 
     /**
-     * Returns all PIPs which can connect this potential to another potential
+     * Every
+     * Returns all PIPs which can connect this potential to another potential.
      * @return
      */
-        public Collection<PIP> getAdjacentPIPs() {
+    public Collection<PIP> getAdjacentPIPs() {
             return adjacentPIPs;
         }
 
@@ -162,31 +163,48 @@ public class Potential {
     }
 
     /**
-     * Returns the underlying tile mesh of pips - device dependent
+     * Returns the wrapper object of type DesignPotentials where this Potential is part of
      * @return
      */
-    public Collection<Tile> getUnderlyingPIPTiles() {
-        return underlyingPIPTiles;
+    public DesignPotentials getDesignPotentials(){
+        return this.designWrapper;
     }
 
     /**
-     * Sets the underlying tile mesh
-     * @param underlyingPIPTiles
+     * Returns the included pins
+     * @return
      */
-    public void setUnderlyingPIPTiles(Collection<Tile> underlyingPIPTiles) {
-        this.underlyingPIPTiles = underlyingPIPTiles;
+    public Collection<Pin> getPins(){
+        return this.pins;
+    }
+
+    /**
+     * Sets the pins.
+     * @param newPins
+     */
+    public void setPins(Collection<Pin> newPins){
+        this.pins = newPins;
     }
 
 
+    /**
+     * Checks if the given pin is on the potential.
+     * @param pin
+     * @return true if so, false if not
+     */
+    public boolean isPinOfPotential(Pin pin){
+        if(pins.contains(pin)) return true;
+        return false;
+    }
     /**
      * Checks if this wire is on this potential
      * @param wire
      * @return
      */
     public boolean isWireOfPotential(Integer wire){
-            if (wires.contains(wire)) return true;
-            return false;
-        }
+        if (wires.contains(wire)) return true;
+        return false;
+    }
 
     /**
      * Checks if this PIP is yet integrated in this potential (electrically: are both sides of the pip on the same potential?)
@@ -194,11 +212,11 @@ public class Potential {
      * @return
      */
     public boolean isPIPOfPotential(PIP pip){
-            if(pips.contains(pip)){
-                return true;
-            }
-            return false;
+        if(pips.contains(pip)){
+            return true;
         }
+        return false;
+    }
 
     /**
      * Reveals whether the given PIP is adjacent (can connect this potential with another) to this potential.
@@ -226,11 +244,7 @@ public class Potential {
             for (PIP otherPIP : other.getAdjacentPIPs()){
                 this.adjacentPIPs.add(otherPIP);
             }
-            for (Tile otherTile : other.getUnderlyingPIPTiles()){
-                this.underlyingPIPTiles.add(otherTile);
-            }
             other.clear();
-            allPotentials.get(this.design).remove(other);
             return other;
 
 
@@ -247,21 +261,14 @@ public class Potential {
      * @assert this.net != other.net
      * @return the activated pip (was the parameter)
      */
-    public PIP fuse(Potential other, PIP pip){
-        if (other.equals(this)) return null;
-        if (!this.adjacentPIPs.contains(pip) || !other.getAdjacentPIPs().contains(pip)){
-            // pip is not in both connectable pip sets, i.e. common of both potentials
-            return null;
-        }
-        if (this.net !=null && other.net !=null &&(!this.net.equals(other.net))){
-            return null;
-        }
+    package Potential fuse(Potential other, PIP pip){
+
         other.getAdjacentPIPs().remove(pip);
         this.fuse(other);
         // pip is now integrated;
         this.adjacentPIPs.remove(pip);
         this.pips.add(pip);
-        return pip;
+        return this;
     }
 
     /**
@@ -271,8 +278,9 @@ public class Potential {
             wires.clear();
             pips.clear();
             adjacentPIPs.clear();
-            underlyingPIPTiles.clear();
-            allPotentials.get(this.design).remove(this);
+            designWrapper = null;
+            this.design = null;
+
         //TODO check if all dependencies are removed
         }
 
@@ -308,12 +316,8 @@ public class Potential {
      * @param wire
      * @return the Potential holding this wire
      */
-     public static Potential getPotentialOfWire(Design design, int wire){
-         if(!initialized(design)) initAllPotentials(design);
-        if (allPotentials.get(design)==null){
-            return null;
-        }
-        for (Potential pot : allPotentials.get(design)){
+     public static Potential getPotentialOfWire(DesignPotentials designWrapper, int wire){
+        for (Potential pot : designWrapper.getAllPotentials()){
             if (pot.isWireOfPotential(wire)){
                 return pot;
             }
@@ -323,16 +327,11 @@ public class Potential {
 
     /**
      * Return the potential of the given pip
-     * @param design
-     * @param pip
+     * @param designWrapper
      * @return
      */
-    public static Potential getPotentialOfPIP(Design design, PIP pip){
-        if(!initialized(design)) initAllPotentials(design);
-        if (allPotentials.get(design)==null){
-            return null;
-        }
-        for (Potential pot : allPotentials.get(design)){
+    public static Potential getPotentialOfPIP(DesignPotentials designWrapper, PIP pip){
+        for (Potential pot : designWrapper.getAllPotentials()){
             if (pot.isPIPOfPotential(pip)){
                 return pot;
             }
@@ -345,12 +344,8 @@ public class Potential {
      * @param wire
      * @return the Potential holding this wire
      */
-    public static Potential getPotential(Design design, int wire){
-        if(!initialized(design)) initAllPotentials(design);
-        if (allPotentials.get(design)==null){
-            return null;
-        }
-        for (Potential pot : allPotentials.get(design)){
+    public static Potential getPotential(DesignPotentials designWrapper, int wire){
+        for (Potential pot : designWrapper.getAllPotentials()){
             if (pot.isWireOfPotential(wire)){
                 return pot;
             }
@@ -365,13 +360,9 @@ public class Potential {
      * @param pip
      * @return
      */
-    public static Collection<Potential> getAdjacentPotentialsOfPIP(Design design, PIP pip){
-        if(!initialized(design)) initAllPotentials(design);
-        if (allPotentials.get(design)==null){
-            return null;
-        }
+    public static Collection<Potential> getAdjacentPotentialsOfPIP(DesignPotentials designWrapper, PIP pip){
         HashSet<Potential> set = new HashSet<Potential>();
-        for (Potential p : allPotentials.get(design)){
+        for (Potential p : designWrapper.getAllPotentials()){
             if (p.getAdjacentPIPs().contains(pip)){
                 set.add(p);
             }
@@ -383,70 +374,12 @@ public class Potential {
     }
 
 
-    /**
-     * Determines if the given Potential is significant or not
-     * @param other
-     * @return
-     */
-    public static boolean isSignificantPotential(Potential other){
-        return other.isSignificant();
-    }
-
-
-    /**
-     * Reveals if the two Pips are on the same potential
-     * @param design
-     * @param a
-     * @param b
-     * @return
-     */
-    public static boolean isSamePotential(Design design, PIP a, PIP b){
-        if(initialized(design)) initAllPotentials(design);
-        for (Potential p : allPotentials.get(design)){
-            if (p.getPIPs().contains(a) && p.getPIPs().contains(b)) return true;
-            return false;
-        }
-    }
-
-
-    /**
-     * Initializes all potentials for the given design and stores them.
-     * @param design
-     */
-    public static void initAllPotentials(Design design){
-        Collection<Potential> allPotsOfThisDesign = allPotentials.get(design);
-        if (allPotsOfThisDesign== null){
-            allPotsOfThisDesign = new HashSet<Potential>();
-        }
-        for (Instance inst : design.getInstances()){
-            for(Pin pin : inst.getPins()){
-                AnchorPoint p = new AnchorPoint(pin);
-                Potential pot = new Potential(design, p);
-                allPotsOfThisDesign.add(pot);
-            }
-        }
-        for (Potential pot : allPotentials.get(design)){
-            pot.expandAll();
-        }
-
-        isInitialized.put(design, true);
-    }
-
-    /**
-     * Determines whether the class has been initialized for this design
-     * @param design
-     * @return
-     */
-    private static boolean initialized(Design design){
-        if(isInitialized.containsKey(design) && isInitialized.get(design)) return true;
-        return false;
-    }
 
 
     /* #############################
-        Anchor point interface
+        Interface whcih collects Pin, Pip, wire interface
      ################################*/
-    public static class AnchorPoint{
+    public static class ElectricalObject{
 
         Integer wire;
         PrimitiveSite site;
@@ -459,7 +392,7 @@ public class Potential {
 
         public boolean isPrimitiveSite;
 
-        public AnchorPoint(Integer wire){
+        public ElectricalObject(Integer wire){
             this.wire = wire;
             isWire = true;
             isPIP = false;
@@ -469,7 +402,7 @@ public class Potential {
         }
 
 
-        public AnchorPoint(PrimitiveSite site){
+        public ElectricalObject(PrimitiveSite site){
             this.site = site;
             isWire = false;
             isPIP = false;
@@ -477,7 +410,7 @@ public class Potential {
             isPrimitiveSite = true;
         }
 
-        public AnchorPoint(Pin pin){
+        public ElectricalObject(Pin pin){
             this.pin = pin;
             isWire = false;
             isPIP = false;
@@ -485,7 +418,7 @@ public class Potential {
             isPrimitiveSite = false;
         }
 
-        public AnchorPoint(PIP pip ){
+        public ElectricalObject(PIP pip ){
             this.pip = pip;
             isWire = false;
             isPIP = true;
@@ -493,7 +426,7 @@ public class Potential {
             isPrimitiveSite = false;
         }
 
-        public AnchorPoint(Net net){
+        public ElectricalObject(Net net){
             this.pin = net.getSource();
             isWire = false;
             isPIP = false;
@@ -505,7 +438,7 @@ public class Potential {
          * A unified method to get the anchor point as wire, independent of the input type
          * @return
          */
-        public Integer getAnchorPointAsWire(){
+        public Integer getElectricalObjectAsWire(){
         // TODO implement so that for each type, the input is converted to the output type
 
             if (isWire){
@@ -526,11 +459,15 @@ public class Potential {
          * Returns the anchor point's net, deducted from the actual type
          * @return
          */
-        public Net getAnchorPointAsNet(){
+        public Net getElectricalObjectAsNet(){
             if (isPin) return pin.getNet();
 
                     //TODO implement correctly for all types
             return null;
+        }
+
+        public PIP getConnectedPIPs (Pin pin){
+
         }
 
 
