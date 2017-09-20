@@ -1,9 +1,6 @@
 package minitask_2;
 
-import edu.byu.ece.rapidSmith.design.Design;
-import edu.byu.ece.rapidSmith.design.Net;
-import edu.byu.ece.rapidSmith.design.PIP;
-import edu.byu.ece.rapidSmith.design.Pin;
+import edu.byu.ece.rapidSmith.design.*;
 import edu.byu.ece.rapidSmith.device.PrimitiveSite;
 import edu.byu.ece.rapidSmith.device.Tile;
 
@@ -54,12 +51,12 @@ public class Potential {
     /**
      * Defines the first point of the Potential and therefore the first "wire tree"
      * @param design
-     * @param wireAnchorPoint
+     * @param anchor
      */
     public Potential(Design design, AnchorPoint anchor){
         init(design);
         wires.add(anchor.getAnchorPointAsWire());
-        net=null;
+        net=anchor.getAnchorPointAsNet();
         this.expandAll();
 
     }
@@ -86,6 +83,9 @@ public class Potential {
 
         // the net of this potential
         private Net net;
+
+        // Whether class has been initialized with a design
+        private static HashMap<Design,Boolean> isInitialized;
 
 
 
@@ -272,6 +272,7 @@ public class Potential {
             pips.clear();
             adjacentPIPs.clear();
             underlyingPIPTiles.clear();
+            allPotentials.get(this.design).remove(this);
         //TODO check if all dependencies are removed
         }
 
@@ -282,7 +283,8 @@ public class Potential {
     private void expandAll(){
         //TODO implement this method based on wires/tiles/whatever offers the best methods
         Pin pin;
-        pin.
+        //pin.
+        pin.getNet().
 
     }
 
@@ -307,6 +309,7 @@ public class Potential {
      * @return the Potential holding this wire
      */
      public static Potential getPotentialOfWire(Design design, int wire){
+         if(!initialized(design)) initAllPotentials(design);
         if (allPotentials.get(design)==null){
             return null;
         }
@@ -325,6 +328,7 @@ public class Potential {
      * @return
      */
     public static Potential getPotentialOfPIP(Design design, PIP pip){
+        if(!initialized(design)) initAllPotentials(design);
         if (allPotentials.get(design)==null){
             return null;
         }
@@ -342,6 +346,7 @@ public class Potential {
      * @return the Potential holding this wire
      */
     public static Potential getPotential(Design design, int wire){
+        if(!initialized(design)) initAllPotentials(design);
         if (allPotentials.get(design)==null){
             return null;
         }
@@ -361,6 +366,7 @@ public class Potential {
      * @return
      */
     public static Collection<Potential> getAdjacentPotentialsOfPIP(Design design, PIP pip){
+        if(!initialized(design)) initAllPotentials(design);
         if (allPotentials.get(design)==null){
             return null;
         }
@@ -395,6 +401,7 @@ public class Potential {
      * @return
      */
     public static boolean isSamePotential(Design design, PIP a, PIP b){
+        if(initialized(design)) initAllPotentials(design);
         for (Potential p : allPotentials.get(design)){
             if (p.getPIPs().contains(a) && p.getPIPs().contains(b)) return true;
             return false;
@@ -402,10 +409,44 @@ public class Potential {
     }
 
 
+    /**
+     * Initializes all potentials for the given design and stores them.
+     * @param design
+     */
+    public static void initAllPotentials(Design design){
+        Collection<Potential> allPotsOfThisDesign = allPotentials.get(design);
+        if (allPotsOfThisDesign== null){
+            allPotsOfThisDesign = new HashSet<Potential>();
+        }
+        for (Instance inst : design.getInstances()){
+            for(Pin pin : inst.getPins()){
+                AnchorPoint p = new AnchorPoint(pin);
+                Potential pot = new Potential(design, p);
+                allPotsOfThisDesign.add(pot);
+            }
+        }
+        for (Potential pot : allPotentials.get(design)){
+            pot.expandAll();
+        }
+
+        isInitialized.put(design, true);
+    }
+
+    /**
+     * Determines whether the class has been initialized for this design
+     * @param design
+     * @return
+     */
+    private static boolean initialized(Design design){
+        if(isInitialized.containsKey(design) && isInitialized.get(design)) return true;
+        return false;
+    }
+
+
     /* #############################
         Anchor point interface
      ################################*/
-    public class AnchorPoint{
+    public static class AnchorPoint{
 
         Integer wire;
         PrimitiveSite site;
@@ -479,6 +520,17 @@ public class Potential {
 
             }
             return -1;
+        }
+
+        /**
+         * Returns the anchor point's net, deducted from the actual type
+         * @return
+         */
+        public Net getAnchorPointAsNet(){
+            if (isPin) return pin.getNet();
+
+                    //TODO implement correctly for all types
+            return null;
         }
 
 
