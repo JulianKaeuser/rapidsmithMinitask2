@@ -3,6 +3,8 @@ package minitask_2;
 import edu.byu.ece.rapidSmith.design.Design;
 import edu.byu.ece.rapidSmith.design.Net;
 import edu.byu.ece.rapidSmith.design.PIP;
+import edu.byu.ece.rapidSmith.design.Pin;
+import edu.byu.ece.rapidSmith.device.PrimitiveSite;
 import edu.byu.ece.rapidSmith.device.Tile;
 
 import java.util.Collection;
@@ -11,6 +13,11 @@ import java.util.HashSet;
 
 /**
  * Created by Julian Käuser on 18.09.17.
+ *
+ * A Potential is a set of wires and pips which form an isoelectric in the fpga fabric. If a pip in included, both ends
+ * of the pip are part of the potential. if a pip is adjacent to the potential, one end is connected to the potential,
+ * while the other is part of another potential or undefined (floating). Setting this pip integrates the pip into the
+ * adjacent potentials and thus fuses them.
  */
 public class Potential {
 
@@ -30,7 +37,7 @@ public class Potential {
      * Constructor with design only; potential is undefined and therefore only internal use
      * @param design
      */
-        private Potential(Design design) {
+        private void init(Design design) {
             wires = new HashSet<Integer>();
             pips = new HashSet<PIP>();
             adjacentPIPs = new HashSet<PIP>();
@@ -49,20 +56,11 @@ public class Potential {
      * @param design
      * @param wireAnchorPoint
      */
-    public Potential(Design design, Integer wireAnchorPoint){
-        wires = new HashSet<Integer>();
-        pips = new HashSet<PIP>();
-        adjacentPIPs = new HashSet<PIP>();
-        this.underlyingPIPTiles = new HashSet<Tile>();
-        this.design = design;
-        if (allPotentials.get(design) == null) {
-            allPotentials.put(design, new HashSet<Potential>());
-
-        }
-        allPotentials.get(design).add(this);
-        wires.add(wireAnchorPoint);
+    public Potential(Design design, AnchorPoint anchor){
+        init(design);
+        wires.add(anchor.getAnchorPointAsWire());
         net=null;
-        this.expandAllWires();
+        this.expandAll();
 
     }
 
@@ -281,8 +279,11 @@ public class Potential {
      * This method includes all wires which are now connected to this potential in this object, and re-adjusts
      * the "borders" (i.e. pips)
      */
-    private void expandAllWires(){
-        //TODO implement this method based on tiles?
+    private void expandAll(){
+        //TODO implement this method based on wires/tiles/whatever offers the best methods
+        Pin pin;
+        pin.
+
     }
 
     /**
@@ -400,4 +401,88 @@ public class Potential {
         }
     }
 
+
+    /* #############################
+        Anchor point interface
+     ################################*/
+    public class AnchorPoint{
+
+        Integer wire;
+        PrimitiveSite site;
+        Pin pin;
+        PIP pip;
+
+        public boolean isWire;
+        public boolean isPIP;
+        public boolean isPin;
+
+        public boolean isPrimitiveSite;
+
+        public AnchorPoint(Integer wire){
+            this.wire = wire;
+            isWire = true;
+            isPIP = false;
+            isPin = false;
+
+            isPrimitiveSite = false;
+        }
+
+
+        public AnchorPoint(PrimitiveSite site){
+            this.site = site;
+            isWire = false;
+            isPIP = false;
+            isPin = false;
+            isPrimitiveSite = true;
+        }
+
+        public AnchorPoint(Pin pin){
+            this.pin = pin;
+            isWire = false;
+            isPIP = false;
+            isPin = true;
+            isPrimitiveSite = false;
+        }
+
+        public AnchorPoint(PIP pip ){
+            this.pip = pip;
+            isWire = false;
+            isPIP = true;
+            isPin = false;
+            isPrimitiveSite = false;
+        }
+
+        public AnchorPoint(Net net){
+            this.pin = net.getSource();
+            isWire = false;
+            isPIP = false;
+            isPin = true;
+            isPrimitiveSite = false;
+        }
+
+        /**
+         * A unified method to get the anchor point as wire, independent of the input type
+         * @return
+         */
+        public Integer getAnchorPointAsWire(){
+        // TODO implement so that for each type, the input is converted to the output type
+
+            if (isWire){
+                return this.wire;
+            }
+            if(isPIP){
+                return this.pip.getStartWire();
+            }
+            if(isPin){
+            }
+            if(isPrimitiveSite){
+
+            }
+            return -1;
+        }
+
+
+
+
+    }
 }
