@@ -340,6 +340,7 @@ public class Potential {
         }
         // check for all encountered pips if they are adjacent or included
         /*
+        TODO geht das so?
         Geht das so??
          */
         for (int existingWire : wires){
@@ -347,7 +348,7 @@ public class Potential {
                 WireConnection[] wireConnectionsForExistingWire = existingPIP.getTile().getWireConnections(existingWire);
                 for (WireConnection wc : wireConnectionsForExistingWire){
                     if(wc.isPIP()){
-                        wires.add(wc.getWire());
+
                     }
                 }
             }
