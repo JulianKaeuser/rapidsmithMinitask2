@@ -27,7 +27,6 @@ public class InterconnectRepair {
     private WireEnumerator wireEnum;
     private Boolean isFixed = false; //Flag die wir nutzen können um die Reperatur ggf. zu überspringen
 
-
     private Collection<Potential> potentials;
     /*
     This class holds the minitask 2 invocation methods etc. Created mainly for testing reasons
@@ -36,19 +35,24 @@ public class InterconnectRepair {
         this.brokenDesign = brokenDesign; //das merken wir uns
         this.device = brokenDesign.getDevice(); //das sind nur hilfs variablen
         this.wireEnum = this.device.getWireEnumerator();
-
         this.isFixed = false;
     }
 
     public Design fixDesign(){
         for (Net aNet : this.brokenDesign.getNets()){
-            this.checkIfBroken(aNet);
+        //    this.checkIfBroken(aNet);
+            for(Pin p : aNet.getPins()) {
+                KabelBaum k = new KabelBaum(p, this.brokenDesign);
+                logger.info(String.valueOf(k.getMight()));
+                logger.info(String.valueOf(k.isComplete()));
+            }
         }
         return this.brokenDesign;
     }
 
     private PIP getPIPfromPin(Pin pin){
         Net net = pin.getNet();
+        //WireEnum.
         int pinWire = this.device.getPrimitiveExternalPin(pin);
         for (PIP pip : net.getPIPs()){
             if (pip.getEndWire() == pinWire){ //ist das richtigrum ?
