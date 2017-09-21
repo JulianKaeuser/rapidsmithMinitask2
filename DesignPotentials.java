@@ -1,15 +1,13 @@
 package minitask_2;
 
-import edu.byu.ece.rapidSmith.design.Design;
+import de.tu_darmstadt.rs.MoveModulesEverywhere;
+import edu.byu.ece.rapidSmith.design.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-
-
-import edu.byu.ece.rapidSmith.design.Instance;
-import edu.byu.ece.rapidSmith.design.PIP;
-import edu.byu.ece.rapidSmith.design.Pin;
 
 /**
  * Created by Julian Käuser on 20.09.17.
@@ -18,19 +16,57 @@ import edu.byu.ece.rapidSmith.design.Pin;
  */
 public class DesignPotentials {
 
+    // Logger
+    private static final Logger logger = LoggerFactory.getLogger(MoveModulesEverywhere.class);
+    private static int counter = 0;
+
+    // dEsign to work on
     private Design design;
+    // all potentials held in this design
     private Set<Potential> allPotentials;
+    // whether potentials may be fused
     private boolean fuseFlag;
 
+    /* ######################################
+                constructor(s)
+     ########################################*/
+
+    /**
+     * INitiliazes the object and finds all existing potentials
+     * @param design
+     */
     public DesignPotentials (Design design){
         this.design = design;
         this.allPotentials = new HashSet<Potential>();
         fuseFlag = false;
 
-        for (Instance inst : design.getInstances()){
-            for(Pin pin : inst.getPins()){
-                Potential pot = new Potential(this, pin);
-                allPotentials.add(pot);
+        boolean debugSpecific = false;
+
+        for (Net net : design.getNets()){
+            debugSpecific = false;
+            if (net.getName().equals("module_instance/ethernet_rx_0/reset_restart[0]")&&counter==0) {
+                debugSpecific = true;
+            }
+           if (debugSpecific) logger.info("Net "+net.getName()+" under review");
+            Potential sourcePot = new Potential(this, net.getSource());
+            allPotentials.add(sourcePot);
+           if(debugSpecific) logger.info("source pin potential with ID "+ sourcePot.instanceID);
+
+            for (Pin sinkPin : net.getPins()){
+               if(debugSpecific) logger.info("sink pin "+sinkPin.getName());
+                if (this.getPotentialOfPin(sinkPin)==null) {
+                    Potential potSink = new Potential(this, sinkPin);
+                    if(debugSpecific) {
+                        logger.info("sink pin has new net - obvious error for sink pin" + sinkPin.getName());
+                        logger.info("created new Potential for sinkPin " + sinkPin.getName() + " with ID" + potSink.instanceID);
+                    }
+                }
+                else{
+                    if(debugSpecific) logger.info("sink pin has defined potential");
+                }
+            }
+            if(debugSpecific&&counter==0){
+                counter++;
             }
         }
     }
@@ -100,6 +136,66 @@ public class DesignPotentials {
     }
 
 
+    /**
+     * Returns the potential of this wire. If no potential is defined yet, null is returned.
+     * @param wire
+     * @return the Potential holding this wire
+     */
+    public Potential getPotentialOfWire( int wire){
+        for (Potential pot : allPotentials){
+            if (pot.isWireOfPotential(wire)){
+                return pot;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Return the potential of the given pip. If not defined, null is returned.
+     * @return
+     */
+    public Potential getPotentialOfPIP( PIP pip){
+        for (Potential pot : allPotentials){
+            if (pot.isPIPOfPotential(pip)){
+                return pot;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns the potential of the gven pin, if yet defined. Otherwise, null is returned.
+     * @param pin
+     * @return
+     */
+    public Potential getPotentialOfPin(Pin pin){
+        for (Potential pot : allPotentials){
+            if (pot.isPinOfPotential(pin)){
+                return pot;
+            }
+        }
+        return null;
+    }
+
+
+    /**
+     * Returns a collection of potentials (might only be of cardinality 2) which are adjacent to the given
+     * pip (=which would be fused if the pip is set).
+     * @param pip
+     * @return
+     */
+    public  Collection<Potential> getAdjacentPotentialsOfPIP( PIP pip){
+        HashSet<Potential> set = new HashSet<Potential>();
+        for (Potential p : allPotentials){
+            if (p.getAdjacentPIPs().contains(pip)){
+                set.add(p);
+            }
+            if(!set.contains(p) && p.getAdjacentPIPs().contains(pip)){
+                set.add(p);
+            }
+        }
+        return set;
+    }
 
 
 }

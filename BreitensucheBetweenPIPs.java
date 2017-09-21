@@ -12,6 +12,7 @@ import java.util.*;
  */
 public class BreitensucheBetweenPIPs {
     private Design design;
+    private DesignPotentials designWrapper;
     private Potential potenialA;
     private Potential potenialB;
 
@@ -19,10 +20,11 @@ public class BreitensucheBetweenPIPs {
 
 
 
-    public BreitensucheBetweenPIPs(Design design, PIP A, PIP B){
-        this.design = design;
-        this.potenialA = Potential.getPotentialOfPIP(design, A);
-        this.potenialB = Potential.getPotentialOfPIP(design, B);
+    public BreitensucheBetweenPIPs(DesignPotentials designWrapper, PIP A, PIP B){
+        this.design = designWrapper.getDesign();
+        this.designWrapper = designWrapper;
+        this.potenialA = designWrapper.getPotentialOfPIP(A);
+        this.potenialB = designWrapper.getPotentialOfPIP(B);
 
         //wir sind NICHT connected, würden das gerne aber.
         //1.) Finde alle Pips am rand, wir arbeiten nur noch auf einer seite, damit ist der Name falsch XD
@@ -43,7 +45,7 @@ public class BreitensucheBetweenPIPs {
         if(this.potenialA.equals(this.potenialB))
             return;
         PIP lastPip = lastPipNode.getPip();
-        Potential lastPipPotenial = Potential.getPotentialOfPIP(this.design, lastPipNode.getPip());
+        Potential lastPipPotenial = designWrapper.getPotentialOfPIP(lastPipNode.getPip());
         this.potenialB.fuse(lastPipPotenial, lastPip);
         this.fixEverthing(lastPipNode.parrent);
     }
@@ -51,7 +53,7 @@ public class BreitensucheBetweenPIPs {
     public void doBreitensuche(){
         pipNode best = leaves.poll(); //der beste Knoten ist der mit dem kleinsten gewicht und ist immer vorne
 
-        Collection<Potential> potentials = Potential.getAdjacentPotentialsOfPIP(this.design, best.getPip());
+        Collection<Potential> potentials = designWrapper.getAdjacentPotentialsOfPIP(best.getPip());
         //prüfen ob wir das Ziel ereicht haben d.h. vor Potenial B stehen mit dem wir verschmelzen können
         for (Potential pot : potentials){
             if(pot.equals(this.potenialB)){ //gefunden

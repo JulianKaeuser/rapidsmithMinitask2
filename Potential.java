@@ -19,6 +19,10 @@ import java.util.HashSet;
  */
 public class Potential {
 
+    public final int instanceID;
+
+    private static int runningID = 0;
+
 
         /* #####################################################
                        constructor(s)
@@ -31,13 +35,14 @@ public class Potential {
      * @param startPin
      */
     public Potential(DesignPotentials designWrapper, Pin startPin){
+        instanceID = assignRunningID();
         wires = new HashSet<Integer>();
         pips = new HashSet<PIP>();
         adjacentPIPs = new HashSet<PIP>();
         pins = new HashSet<Pin>();
 
         //TODO find out how to get from pin to wire
-        wires.add(null);
+        wires.add(startPin.getInstance().getPrimitiveSite().getExternalPinWireEnum(startPin.getName()));
         pins.add(startPin);
         net=startPin.getNet();
         this.designWrapper = designWrapper;
@@ -45,10 +50,12 @@ public class Potential {
         this.expandAll();
     }
 
+    /*
     /**
      * Defines the first point of the Potential and therefore the first "wire tree"
      * @param startWire the first piece of metal, as wire
-     */
+     *
+
     public Potential(DesignPotentials designWrapper, int startWire){
         wires = new HashSet<Integer>();
         pips = new HashSet<PIP>();
@@ -64,12 +71,14 @@ public class Potential {
         this.expandAll();
 
     }
+    */
+
 
     /**
      * Constructor with pip as the first point of the potential
      * @param designWrapper
      * @param startPip
-     */
+     *
     public Potential(DesignPotentials designWrapper, PIP startPip){
         wires = new HashSet<Integer>();
         pips = new HashSet<PIP>();
@@ -87,6 +96,7 @@ public class Potential {
         this.expandAll();
 
     }
+    */
 
 
     // ###############################################
@@ -310,6 +320,7 @@ public class Potential {
      */
     private void expandAll(){
         //TODO implement this method based on wires/tiles/whatever offers the best methods
+        int counter = 0;
 
         // add all wires connected to all known pins
         if (!pins.isEmpty()){
@@ -325,6 +336,65 @@ public class Potential {
                 wires.add(pip.getEndWire());
             }
         }
+        // TODO check beforehand which pips are activated on this net...
+
+        // look at all connections from all wires
+        for (int existingWire : wires){
+            Collection<PIP> netPIPsWithThisWire = new HashSet<PIP>(); // holds all pips with this wire as start or end point
+            for (PIP pip : net.getPIPs()){
+                if (pip.getStartWire()==existingWire || pip.getEndWire()==existingWire){
+                    //The net has got a pip set which has the current wire as start or end point
+                    netPIPsWithThisWire.add(pip);
+                }
+            }
+            // then look outgoing from every pin the potential kno, how far it reaches
+            for (Pin existingPin : pins){
+                // all coennctions which can be reched from this pin/this pin's wire
+                WireConnection[] existingConnectionsForExistingWire = existingPin.getInstance().getTile().getWireConnections(existingWire);
+                for (WireConnection wc : existingConnectionsForExistingWire){
+                    // wire can be reached directly
+                    if(!wc.isPIP()){
+                        // add to potential, and notify that something has been added
+                        wires.add(wc.getWire());
+                        counter++;
+                    }
+                    if(wc.isPIP()){
+                        // wire would have to be set to be reached. check if it is set in next steps
+                        boolean isAdjacent = true;
+                        for (PIP pip : netPIPsWithThisWire){
+                            // for every pip which is set in this net with the current wire at at least one end,
+                            // see how it connects and add it to this potential
+
+                            if (pip.getStartWire()==wc.getWire()){
+                                pips.add(pip);
+                                wires.add(pip.getStartWire());
+                                wires.add(pip.getEndWire());
+                                isAdjacent = false;
+                                counter++;
+                            }
+                            else if(pip.getEndWire()==wc.getWire()){
+                                pips.add(pip);
+                                wires.add(pip.getEndWire());
+                                wires.add(pip.getStartWire());
+                                isAdjacent = false;
+                                counter++;
+                            }
+                        }
+                        // if the flag is not resetted, this means that there is no pip in the net connecting the wc pip
+                        // which has one end wire in the potential then, but not the other. it is adjacent.
+                        if(isAdjacent){
+                            adjacentPIPs.add(new PIP(existingPin.getTile(), existingWire, wc.getWire()));
+                        }
+                    }
+                }
+            }
+            // if something has been found in this run which was formerly not recognized as part of the potential,
+            //repeat
+            if(counter!=0){
+                this.expandAll();
+            }
+        }
+
         /*
         check for all included wires, which wires are permantently connected to this wire, and add this wire
          */
@@ -357,7 +427,7 @@ public class Potential {
     }
 
     /**
-     * Is Unsignificant if no pips are included (only "floating" wire). If at least one pip is inside, wires are
+     * Is unsignificant if no pips are included (only "floating" wire). If at least one pip is inside, wires are
      * connected.
      * @return
      */
@@ -369,169 +439,16 @@ public class Potential {
 
 
     /* ########################################
-         static methods
+                  static methods
      ###########################################*/
-    /**
-     * Returns the potential of this wire. If no potential is defined yet, null is returned.
-     * @param wire
-     * @return the Potential holding this wire
-     */
-     public static Potential getPotentialOfWire(DesignPotentials designWrapper, int wire){
-        for (Potential pot : designWrapper.getAllPotentials()){
-            if (pot.isWireOfPotential(wire)){
-                return pot;
-            }
-        }
-        return null;
-    }
 
     /**
-     * Return the potential of the given pip
-     * @param designWrapper
+     * Handles the classes ID and assigns a new ID if requested.
      * @return
      */
-    public static Potential getPotentialOfPIP(DesignPotentials designWrapper, PIP pip){
-        for (Potential pot : designWrapper.getAllPotentials()){
-            if (pot.isPIPOfPotential(pip)){
-                return pot;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Returns the potential of this wire. If no potential is defined yet, null is returned.
-     * @param wire
-     * @return the Potential holding this wire
-     */
-    public static Potential getPotential(DesignPotentials designWrapper, int wire){
-        for (Potential pot : designWrapper.getAllPotentials()){
-            if (pot.isWireOfPotential(wire)){
-                return pot;
-            }
-        }
-        return null;
-    }
-
-
-    /**
-     * Returns a collection of potentials (might only be of cardinality 2) which are adjacent to the given
-     * pip (=which would be fused if the pip is set).
-     * @param pip
-     * @return
-     */
-    public static Collection<Potential> getAdjacentPotentialsOfPIP(DesignPotentials designWrapper, PIP pip){
-        HashSet<Potential> set = new HashSet<Potential>();
-        for (Potential p : designWrapper.getAllPotentials()){
-            if (p.getAdjacentPIPs().contains(pip)){
-                set.add(p);
-            }
-            if(!set.contains(p) && p.getAdjacentPIPs().contains(pip)){
-                set.add(p);
-            }
-        }
-        return set;
-    }
-
-
-
-
-    /* #############################
-        Interface whcih collects Pin, Pip, wire interface
-     ################################*/
-    public static class ElectricalObject{
-
-        Integer wire;
-        PrimitiveSite site;
-        Pin pin;
-        PIP pip;
-
-        public boolean isWire;
-        public boolean isPIP;
-        public boolean isPin;
-
-        public boolean isPrimitiveSite;
-
-        public ElectricalObject(Integer wire){
-            this.wire = wire;
-            isWire = true;
-            isPIP = false;
-            isPin = false;
-
-            isPrimitiveSite = false;
-        }
-
-
-        public ElectricalObject(PrimitiveSite site){
-            this.site = site;
-            isWire = false;
-            isPIP = false;
-            isPin = false;
-            isPrimitiveSite = true;
-        }
-
-        public ElectricalObject(Pin pin){
-            this.pin = pin;
-            isWire = false;
-            isPIP = false;
-            isPin = true;
-            isPrimitiveSite = false;
-        }
-
-        public ElectricalObject(PIP pip ){
-            this.pip = pip;
-            isWire = false;
-            isPIP = true;
-            isPin = false;
-            isPrimitiveSite = false;
-        }
-
-        public ElectricalObject(Net net){
-            this.pin = net.getSource();
-            isWire = false;
-            isPIP = false;
-            isPin = true;
-            isPrimitiveSite = false;
-        }
-
-        /**
-         * A unified method to get the anchor point as wire, independent of the input type
-         * @return
-         */
-        public Integer getElectricalObjectAsWire(){
-        // TODO implement so that for each type, the input is converted to the output type
-
-            if (isWire){
-                return this.wire;
-            }
-            if(isPIP){
-                return this.pip.getStartWire();
-            }
-            if(isPin){
-            }
-            if(isPrimitiveSite){
-
-            }
-            return -1;
-        }
-
-        /**
-         * Returns the anchor point's net, deducted from the actual type
-         * @return
-         */
-        public Net getElectricalObjectAsNet(){
-            if (isPin) return pin.getNet();
-
-                    //TODO implement correctly for all types
-            return null;
-        }
-
-        public PIP getConnectedPIPs (Pin pin){
-
-        }
-
-
-
+    private static int assignRunningID(){
+        runningID++;
+        return runningID;
 
     }
 }
