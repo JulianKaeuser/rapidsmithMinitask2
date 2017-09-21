@@ -1,13 +1,17 @@
 package minitask_2;
 
+import de.tu_darmstadt.rs.MoveModulesEverywhere;
 import edu.byu.ece.rapidSmith.design.*;
 import edu.byu.ece.rapidSmith.device.PrimitiveSite;
 import edu.byu.ece.rapidSmith.device.Tile;
 import edu.byu.ece.rapidSmith.device.WireConnection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by Julian Käuser on 18.09.17.
@@ -18,6 +22,8 @@ import java.util.HashSet;
  * adjacent potentials and thus fuses them.
  */
 public class Potential {
+
+    private static final Logger logger = LoggerFactory.getLogger(MoveModulesEverywhere.class);
 
     public final int instanceID;
 
@@ -321,6 +327,8 @@ public class Potential {
     private void expandAll(){
         //TODO implement this method based on wires/tiles/whatever offers the best methods
         int counter = 0;
+        logger.info("counter = 0, next run");
+
 
         // add all wires connected to all known pins
         if (!pins.isEmpty()){
@@ -339,6 +347,7 @@ public class Potential {
         // TODO check beforehand which pips are activated on this net...
 
         // look at all connections from all wires
+        Set<Integer> wiresToAdd = new HashSet<Integer>();
         for (int existingWire : wires){
             Collection<PIP> netPIPsWithThisWire = new HashSet<PIP>(); // holds all pips with this wire as start or end point
             for (PIP pip : net.getPIPs()){
@@ -348,82 +357,54 @@ public class Potential {
                 }
             }
             // then look outgoing from every pin the potential kno, how far it reaches
-            for (Pin existingPin : pins){
+            for (Pin existingPin : pins) {
                 // all coennctions which can be reched from this pin/this pin's wire
                 WireConnection[] existingConnectionsForExistingWire = existingPin.getInstance().getTile().getWireConnections(existingWire);
-                for (WireConnection wc : existingConnectionsForExistingWire){
-                    // wire can be reached directly
-                    if(!wc.isPIP()){
-                        // add to potential, and notify that something has been added
-                        wires.add(wc.getWire());
-                        counter++;
-                    }
-                    if(wc.isPIP()){
-                        // wire would have to be set to be reached. check if it is set in next steps
-                        boolean isAdjacent = true;
-                        for (PIP pip : netPIPsWithThisWire){
-                            // for every pip which is set in this net with the current wire at at least one end,
-                            // see how it connects and add it to this potential
+                if (existingConnectionsForExistingWire!= null){
+                    for (WireConnection wc : existingConnectionsForExistingWire) {
+                        // wire can be reached directly
+                        if (!wc.isPIP()) {
+                         // add to potential, and notify that something has been added
+                         if (wires.contains(wc.getWire())) counter++;
+                            wiresToAdd.add(wc.getWire());
+                        }
+                        if (wc.isPIP()) {
+                            // wire would have to be set to be reached. check if it is set in next steps
+                            boolean isAdjacent = true;
+                            for (PIP pip : netPIPsWithThisWire) {
+                                // for every pip which is set in this net with the current wire at at least one end,
+                                // see how it connects and add it to this potential
 
-                            if (pip.getStartWire()==wc.getWire()){
-                                pips.add(pip);
-                                wires.add(pip.getStartWire());
-                                wires.add(pip.getEndWire());
-                                isAdjacent = false;
-                                counter++;
+                                if (pip.getStartWire() == wc.getWire()) {
+                                    if (pips.add(pip)) counter++;
+                                    wiresToAdd.add(pip.getStartWire());
+                                    wiresToAdd.add(pip.getEndWire());
+                                    isAdjacent = false;
+
+                                } else if (pip.getEndWire() == wc.getWire()) {
+                                    if (pips.add(pip)) counter++;
+                                    wiresToAdd.add(pip.getEndWire());
+                                    wiresToAdd.add(pip.getStartWire());
+                                    isAdjacent = false;
+                                }
                             }
-                            else if(pip.getEndWire()==wc.getWire()){
-                                pips.add(pip);
-                                wires.add(pip.getEndWire());
-                                wires.add(pip.getStartWire());
-                                isAdjacent = false;
-                                counter++;
+                            // if the flag is not resetted, this means that there is no pip in the net connecting the wc pip
+                            // which has one end wire in the potential then, but not the other. it is adjacent.
+                            if (isAdjacent) {
+                                if (adjacentPIPs.add(new PIP(existingPin.getTile(), existingWire, wc.getWire()))) counter++;
                             }
                         }
-                        // if the flag is not resetted, this means that there is no pip in the net connecting the wc pip
-                        // which has one end wire in the potential then, but not the other. it is adjacent.
-                        if(isAdjacent){
-                            adjacentPIPs.add(new PIP(existingPin.getTile(), existingWire, wc.getWire()));
-                        }
-                    }
-                }
-            }
-            // if something has been found in this run which was formerly not recognized as part of the potential,
-            //repeat
-            if(counter!=0){
-                this.expandAll();
-            }
-        }
-
-        /*
-        check for all included wires, which wires are permantently connected to this wire, and add this wire
-         */
-        for (int existingWire : wires){
-            for (PIP existingPIP : pips){
-                WireConnection[] wireConnectionsForExistingWire = existingPIP.getTile().getWireConnections(existingWire);
-                for (WireConnection wc : wireConnectionsForExistingWire){
-                    if(!wc.isPIP()){
-                        wires.add(wc.getWire());
                     }
                 }
             }
         }
-        // check for all encountered pips if they are adjacent or included
-        /*
-        TODO geht das so?
-        Geht das so??
-         */
-        for (int existingWire : wires){
-            for (PIP existingPIP : pips){
-                WireConnection[] wireConnectionsForExistingWire = existingPIP.getTile().getWireConnections(existingWire);
-                for (WireConnection wc : wireConnectionsForExistingWire){
-                    if(wc.isPIP()){
-
-                    }
-                }
-            }
+        wires.addAll(wiresToAdd);
+        // if something has been found in this run which was formerly not recognized as part of the potential,
+        //repeat
+        logger.info("counter = "+ counter);
+        if(counter!=0){
+            this.expandAll();
         }
-
     }
 
     /**
