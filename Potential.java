@@ -3,6 +3,7 @@ package minitask_2;
 import edu.byu.ece.rapidSmith.design.*;
 import edu.byu.ece.rapidSmith.device.PrimitiveSite;
 import edu.byu.ece.rapidSmith.device.Tile;
+import edu.byu.ece.rapidSmith.device.WireConnection;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -64,10 +65,32 @@ public class Potential {
 
     }
 
+    /**
+     * Constructor with pip as the first point of the potential
+     * @param designWrapper
+     * @param startPip
+     */
+    public Potential(DesignPotentials designWrapper, PIP startPip){
+        wires = new HashSet<Integer>();
+        pips = new HashSet<PIP>();
+        adjacentPIPs = new HashSet<PIP>();
+        pins = new HashSet<Pin>();
+
+        wires.add(startPip.getStartWire());
+        wires.add(startPip.getEndWire());
+        //TODO find out how to get from wire to net etc
+        net=null;
+        pips.add(startPip);
+
+        this.designWrapper = designWrapper;
+        this.design = designWrapper.getDesign();
+        this.expandAll();
+
+    }
 
 
-        // ###############################################
-        //          non-static attributes
+    // ###############################################
+        //             attributes
         // ###############################################
 
         // The DEsignPotentials pobject which holds this potential
@@ -126,15 +149,6 @@ public class Potential {
      */
     public Collection<PIP> getPIPs(){
             return this.pips;
-        }
-
-    /**
-         * adds the wire to this potential
-         * @param wire
-         * @return
-         */
-    private boolean addWire(Integer wire){
-            return (wires.add(wire));
         }
 
     /**
@@ -231,9 +245,10 @@ public class Potential {
     /**
      * Literally spoken: connects the two potentials electrically; this means, they are then the same potential.
      * If the potential should be fused with itself (incorrect bevhaviour), null is returned
-     * @param other
+     * @param other the removed Potential
      */
     private Potential fuse(Potential other){
+
         if (other.equals(this)) return null;
             for (Integer otherWire : other.getWires()){
                 wires.add(otherWire);
@@ -255,16 +270,18 @@ public class Potential {
      * make up how to solve this properly (public, protected, private, no modifier are not the right solutions)
      *
      * connects this potential with the given potential, by setting/including the given pip.
-     * This operation fails if not this and the other potential to be connected are only separated by at most one pip
-     * (else, a more routing-like connection would have to be made). In this case, null is returned.
-     * Null is also returned if the nets are actually different (if one net is null, this is ok), or if the potential
-     * other equals this potential (cannot fuse itself)
+     * This operation fails if the fuse flag of the associated DEisgnPotentials wrapper is not set, indicating that the method
+     * has not been called from the designwrapper.fuse() method. This secures that no wrong data structures are kept.
+     * In this case, null is returned.
      * @param other
      * @param pip
      * @assert this.net != other.net
      * @return the activated pip (was the parameter)
      */
-    package Potential fuse(Potential other, PIP pip){
+    public Potential fuse(Potential other, PIP pip){
+        if(!designWrapper.getFuseFlag()){
+            return null;
+        }
 
         other.getAdjacentPIPs().remove(pip);
         this.fuse(other);
@@ -293,9 +310,46 @@ public class Potential {
      */
     private void expandAll(){
         //TODO implement this method based on wires/tiles/whatever offers the best methods
+
+        // add all wires connected to all known pins
         if (!pins.isEmpty()){
             for (Pin pin : pins){
-                pin.getInstance().
+                int thisPinsConnectedWire =  pin.getInstance().getPrimitiveSite().getExternalPinWireEnum(pin.getName());
+                wires.add(thisPinsConnectedWire);
+            }
+        }
+        // add all wires which are connected to pips which are on this potential (both connectors) (and not only one connector = adjacent)
+        if(!pips.isEmpty()){
+            for (PIP pip : pips){
+                wires.add(pip.getStartWire());
+                wires.add(pip.getEndWire());
+            }
+        }
+        /*
+        check for all included wires, which wires are permantently connected to this wire, and add this wire
+         */
+        for (int existingWire : wires){
+            for (PIP existingPIP : pips){
+                WireConnection[] wireConnectionsForExistingWire = existingPIP.getTile().getWireConnections(existingWire);
+                for (WireConnection wc : wireConnectionsForExistingWire){
+                    if(!wc.isPIP()){
+                        wires.add(wc.getWire());
+                    }
+                }
+            }
+        }
+        // check for all encountered pips if they are adjacent or included
+        /*
+        Geht das so??
+         */
+        for (int existingWire : wires){
+            for (PIP existingPIP : pips){
+                WireConnection[] wireConnectionsForExistingWire = existingPIP.getTile().getWireConnections(existingWire);
+                for (WireConnection wc : wireConnectionsForExistingWire){
+                    if(wc.isPIP()){
+                        wires.add(wc.getWire());
+                    }
+                }
             }
         }
 

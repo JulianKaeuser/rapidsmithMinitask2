@@ -20,10 +20,12 @@ public class DesignPotentials {
 
     private Design design;
     private Set<Potential> allPotentials;
+    private boolean fuseFlag;
 
     public DesignPotentials (Design design){
         this.design = design;
         this.allPotentials = new HashSet<Potential>();
+        fuseFlag = false;
 
         for (Instance inst : design.getInstances()){
             for(Pin pin : inst.getPins()){
@@ -49,6 +51,7 @@ public class DesignPotentials {
      * @return
      */
     public Potential fusePotentials(Potential a, Potential b, PIP pip){
+
         if(a.equals(b)){
             return null;
         }
@@ -65,9 +68,19 @@ public class DesignPotentials {
             return null;
         }
         */
+        fuseFlag = true;
         Potential ret = a.fuse(b, pip);
+        fuseFlag = false;
         allPotentials.remove(b);
         return a;
+    }
+
+    /**
+     * Returns the state of the fuse flag
+     * @return
+     */
+    public boolean getFuseFlag(){
+        return fuseFlag;
     }
 
     /**
