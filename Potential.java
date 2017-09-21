@@ -441,7 +441,7 @@ public class Potential {
     private void checkForNewPins(){
         for (Integer wire : wires){
             if(pins.addAll(this.getAllConnectedPins(wire))){
-                logger.info("new pins discovered (wide search) - " +pins);
+               // logger.info("new pins discovered (wide search) - " +pins);
             }
         }
     }

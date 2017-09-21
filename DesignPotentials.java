@@ -45,7 +45,7 @@ public class DesignPotentials {
         for (Net net : design.getNets()){
             debugSpecific = false;
             if (net.getName().equals("module_instance/ethernet_rx_0/reset_restart[0]")&&counter==0) {
-                debugSpecific = false;
+                debugSpecific = true;
             }
            if (debugSpecific) logger.info("Net "+net.getName()+" under review");
             Potential sourcePot = new Potential(this, net.getSource());
