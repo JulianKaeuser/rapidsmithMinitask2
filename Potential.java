@@ -325,9 +325,30 @@ public class Potential {
      * the "borders" (i.e. pips)
      */
     private void expandAll(){
+        Collection<Integer> wiresToAdd = new HashSet<Integer>();
+        wiresToAdd.add(-1);
+        int counter = 0;
+        this.checkForNewPins();
+        //logger.info("expandAll() on potential #"+instanceID);
+        while(!wiresToAdd.isEmpty()){
+            //logger.info("iteration nr. "+counter);
+            wiresToAdd.clear();
+            wiresToAdd = this.expandOne();
+            wires.addAll(wiresToAdd);
+            this.checkForNewPins(wiresToAdd);
+            counter++;
+        }
+    }
+
+    /**
+     * This method generates a Collection of wires which have been detected as actual part of the potential and which
+     * hence must be integrated into the potential.
+     * The method uses side effects to manipulate the pip, pin and adjacentPip fields of the object
+     * @return
+     */
+    private Collection<Integer> expandOne(){
         //TODO implement this method based on wires/tiles/whatever offers the best methods
         int counter = 0;
-        logger.info("counter = 0, next run");
 
 
         // add all wires connected to all known pins
@@ -364,8 +385,8 @@ public class Potential {
                     for (WireConnection wc : existingConnectionsForExistingWire) {
                         // wire can be reached directly
                         if (!wc.isPIP()) {
-                         // add to potential, and notify that something has been added
-                         if (wires.contains(wc.getWire())) counter++;
+                            // add to potential, and notify that something has been added
+                            if (wires.contains(wc.getWire())) counter++;
                             wiresToAdd.add(wc.getWire());
                         }
                         if (wc.isPIP()) {
@@ -398,13 +419,54 @@ public class Potential {
                 }
             }
         }
-        wires.addAll(wiresToAdd);
-        // if something has been found in this run which was formerly not recognized as part of the potential,
-        //repeat
-        logger.info("counter = "+ counter);
-        if(counter!=0){
-            this.expandAll();
+        wiresToAdd.removeAll(wires);
+        return wiresToAdd;
+    }
+
+    /**
+     * Crawls the wires for pin connections which are not yet stored in the pin set.
+     * @param newWires the recently added wires - eases the search and shortens the execution.
+     */
+    private void checkForNewPins(Collection<Integer> newWires){
+        for (Integer currentWire : newWires){
+            if (pins.addAll(this.getAllConnectedPins(currentWire))){
+                logger.info("new pins discovered - " +pins);
+            }
         }
+    }
+
+    /**
+     * Crawls the wires for pin connections which are not yet stored in the pin set.
+     */
+    private void checkForNewPins(){
+        for (Integer wire : wires){
+            if(pins.addAll(this.getAllConnectedPins(wire))){
+                logger.info("new pins discovered (wide search) - " +pins);
+            }
+        }
+    }
+
+    /**
+     * Returns a collection of pins connected to that wire (on the device)
+     * @param wire
+     * @return
+     */
+    private Collection<Pin> getAllConnectedPins(Integer wire){
+        Collection<Pin> newPins = new HashSet<Pin>();
+        for (Instance inst : design.getInstances()){
+            for (Pin pin : inst.getPins()){
+                if (pin.getInstance().getPrimitiveSite().getExternalPinWireEnum(pin.getName())==wire){
+                    if (newPins.add(pin)) {
+                      //  logger.info("new pin discovered - " + pin.getName() + " net " + net.getSource().getName() + " potential " + instanceID);
+                    }
+                }
+            }
+        }
+        return newPins;
+    }
+
+    private Collection<Pin> getAllConnectedPinsAlternative(Integer wire){
+        return null;
     }
 
     /**

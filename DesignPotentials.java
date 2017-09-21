@@ -45,19 +45,21 @@ public class DesignPotentials {
         for (Net net : design.getNets()){
             debugSpecific = false;
             if (net.getName().equals("module_instance/ethernet_rx_0/reset_restart[0]")&&counter==0) {
-                debugSpecific = true;
+                debugSpecific = false;
             }
            if (debugSpecific) logger.info("Net "+net.getName()+" under review");
             Potential sourcePot = new Potential(this, net.getSource());
             allPotentials.add(sourcePot);
            if(debugSpecific) logger.info("source pin potential with ID "+ sourcePot.instanceID);
 
+            int sinkPinCounter = 1;
             for (Pin sinkPin : net.getPins()){
-               if(debugSpecific) logger.info("sink pin "+sinkPin.getName());
+               if(debugSpecific) logger.info("sink pin "+sinkPin.getName()+ " # "+ sinkPinCounter + "/"+net.getPins().size());
+                sinkPinCounter++;
                 if (this.getPotentialOfPin(sinkPin)==null) {
                     Potential potSink = new Potential(this, sinkPin);
                     if(debugSpecific) {
-                        logger.info("sink pin has new net - obvious error for sink pin" + sinkPin.getName());
+                        logger.info("sink pin has new potential - obvious task-wise error for sink pin " + sinkPin.getName());
                         logger.info("created new Potential for sinkPin " + sinkPin.getName() + " with ID" + potSink.instanceID);
                     }
                 }
