@@ -53,7 +53,7 @@ public class InterconnectRepair {
             //    int wire = aDesign.getDevice().getNodeFromPin(p).getWire(); //kann auch wireConnections sein !
                 log.error(p+"");
                 if (!soll_pot.isPinOfPotential(p)) {
-                    return true;
+                    return true;  
                 }
             }
             /*
