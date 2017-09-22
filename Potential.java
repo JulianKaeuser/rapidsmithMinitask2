@@ -223,7 +223,8 @@ public class Potential {
      * @return true if so, false if not
      */
     public boolean isPinOfPotential(Pin pin){
-        if(pins.contains(pin)) return true;
+       if (wires.contains(pin.getInstance().getPrimitiveSite().getExternalPinWireEnum(pin.getName()))) return true;
+       // if(pins.contains(pin)) return true;
         return false;
     }
     /**
@@ -455,9 +456,9 @@ public class Potential {
         Collection<Pin> newPins = new HashSet<Pin>();
         for (Instance inst : design.getInstances()){
             for (Pin pin : inst.getPins()){
-                if (pin.getInstance().getPrimitiveSite().getExternalPinWireEnum(pin.getName())==wire){
+                if (pin.getInstance().getPrimitiveSite().getExternalPinWireEnum(pin.getPrimitiveSitePinName())==wire){
                     if (newPins.add(pin)) {
-                      //  logger.info("new pin discovered - " + pin.getName() + " net " + net.getSource().getName() + " potential " + instanceID);
+                        logger.info("new pin discovered - " + pin.getName() + " net " + net.getSource().getName() + " potential " + instanceID);
                     }
                 }
             }
@@ -477,6 +478,22 @@ public class Potential {
     public boolean isSignificant(){
         if(pips.isEmpty()) return false;
         return true;
+    }
+
+    public int getWireCount(){
+        return wires.size();
+    }
+
+    public int getPinCount(){
+        return pins.size();
+    }
+
+    public int getPipCount(){
+        return pips.size();
+    }
+
+    public int getCardinality(){
+        return getWireCount()+getPinCount()+getPipCount();
     }
 
 
