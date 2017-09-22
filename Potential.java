@@ -223,7 +223,7 @@ public class Potential {
      * @return true if so, false if not
      */
     public boolean isPinOfPotential(Pin pin){
-       if (wires.contains(pin.getInstance().getPrimitiveSite().getExternalPinWireEnum(pin.getName()))) return true;
+       if (wires.contains(pin.getInstance().getPrimitiveSite().getExternalPinWireEnum(pin.))) return true;
        // if(pins.contains(pin)) return true;
         return false;
     }
