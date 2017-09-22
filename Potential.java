@@ -232,13 +232,7 @@ public class Potential {
      */
     public boolean isPinOfPotential(Pin pin){
        //if (wires.contains(pin.getInstance().getPrimitiveSite().getExternalPinWireEnum(pin.getPrimitiveSitePinName()))) return true;
-    //    if(pins.contains(pin)) return true; //diese Prüfung ist FALSCH
-        //ToDo effizienter machen wenn notwendig, sollte contains überschreiben !
-        for(Pin aPin : this.pins){
-            if(aPin.getInstance().getName()==pin.getInstance().getName()) //WARNING könnte falsch sein ????
-                return true;
-        }
-
+        if(pins.contains(pin)) return true; //diese Prüfung ist richtig
         return false;
     }
     /**
