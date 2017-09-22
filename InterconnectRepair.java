@@ -48,10 +48,10 @@ public class InterconnectRepair {
             Potential soll_pot = new Potential(aDesign,aNet.getSource());
             Collection<Pin> allPins = soll_pot.getPins();
             Pin s_p = aNet.getSource();
-            log.error(s_p.getName()+"");
+            log.error(s_p+" = source pin");
             for(Pin p : aNet.getPins()) {
             //    int wire = aDesign.getDevice().getNodeFromPin(p).getWire(); //kann auch wireConnections sein !
-                log.error(p.getName()+"");
+                log.error(p+"");
                 if (!soll_pot.isPinOfPotential(p)) {
                     return true;
                 }

@@ -49,9 +49,9 @@ public class DesignPotentials {
                 debugSpecific = true;
             }
            if (debugSpecific) logger.info("Net "+net.getName()+" under review");
-            Potential sourcePot = new Potential(this, net.getSource());
+            Potential sourcePot = new Potential(this.getDesign(), net.getSource());
             allPotentials.add(sourcePot);
-           if(debugSpecific) logger.info("source pin potential with ID "+ sourcePot.instanceID+ " pin "+ net.getSource());
+           if(debugSpecific) logger.info("source pin potential with ID "+ sourcePot.getInstanceID()+ " pin "+ net.getSource());
 
             int sinkPinCounter = 1;
             for (Pin sinkPin : net.getPins()){
@@ -62,14 +62,14 @@ public class DesignPotentials {
                     allPotentials.add(potSink);
                     if(debugSpecific) {
                         logger.info("sink pin has new potential - obvious task-wise error for sink pin " + sinkPin);
-                        logger.info("created new Potential for sinkPin " + sinkPin.getName() + " with ID" + potSink.instanceID);
+                        logger.info("created new Potential for sinkPin " + sinkPin.getName() + " with ID" + potSink.getInstanceID());
                     }
                 }
                 else{
                     if(debugSpecific) {
                         Potential potential = this.getPotentialOfPin(sinkPin);
                         logger.info("sink pin" + sinkPin
-                                + " has defined potential:" + potential.instanceID
+                                + " has defined potential:" + potential.getInstanceID()
                                 + " pincount:" + potential.getPinCount()
                                 + " wireCount:" + potential.getWireCount());
                     }
