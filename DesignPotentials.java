@@ -54,7 +54,7 @@ public class DesignPotentials {
 
             int sinkPinCounter = 1;
             for (Pin sinkPin : net.getPins()){
-               if(debugSpecific) logger.info("sink pin "+sinkPin.getName()+ " # "+ sinkPinCounter + "/"+net.getPins().size());
+               if(debugSpecific) logger.info("sink pin "+sinkPin+ " # "+ sinkPinCounter + "/"+net.getPins().size());
                 sinkPinCounter++;
                 if (this.getPotentialOfPin(sinkPin)==null) {
                     Potential potSink = new Potential(this, sinkPin);

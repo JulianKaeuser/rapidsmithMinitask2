@@ -228,8 +228,8 @@ public class Potential {
      * @return true if so, false if not
      */
     public boolean isPinOfPotential(Pin pin){
-       if (wires.contains(pin.getInstance().getPrimitiveSite().getExternalPinWireEnum(pin.))) return true;
-       // if(pins.contains(pin)) return true;
+       //if (wires.contains(pin.getInstance().getPrimitiveSite().getExternalPinWireEnum(pin.getPrimitiveSitePinName()))) return true;
+        if(pins.contains(pin)) return true;
         return false;
     }
     /**
@@ -438,7 +438,7 @@ public class Potential {
     private void checkForNewPins(Collection<Integer> newWires){
         for (Integer currentWire : newWires){
             if (pins.addAll(this.getAllConnectedPins(currentWire))){
-                logger.info("new pins discovered - " +pins);
+               // logger.info("new pins discovered - " +pins);
             }
         }
     }
@@ -463,9 +463,13 @@ public class Potential {
         Collection<Pin> newPins = new HashSet<Pin>();
         for (Instance inst : design.getInstances()){
             for (Pin pin : inst.getPins()){
-                if (pin.getInstance().getPrimitiveSite().getExternalPinWireEnum(pin.getPrimitiveSitePinName())==wire){
+                int pinWireEnumFromName= pin.getInstance().getPrimitiveSite().getExternalPinWireEnum(pin.getName());
+               // int pinWireEnumFromSiteName = pin.getInstance().getPrimitiveSite().getExternalPinWireEnum(pin.getPrimitiveSitePinName());
+                String pinName = pin.getName();
+                String pinSiteName = pin.getPrimitiveSitePinName();
+                if (pinWireEnumFromName==wire){
                     if (newPins.add(pin)) {
-                        logger.info("new pin discovered - " + pin.getName() + " net " + net.getSource().getName() + " potential " + instanceID);
+                        //logger.info("new pin discovered - " + pin + " netSource: " + net.getSource() + " potential " + instanceID);
                     }
                 }
             }
