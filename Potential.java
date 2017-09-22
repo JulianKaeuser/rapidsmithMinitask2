@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Created by Julian Käuser on 18.09.17.
@@ -336,14 +337,24 @@ public class Potential {
     private void expandAll(){
         Collection<Integer> wiresToAdd = new HashSet<Integer>();
         wiresToAdd.add(-1);
+
+        Collection<Tile> tilesToAdd = new HashSet<Tile>();
         int counter = 0;
         this.checkForNewPins();
         //logger.info("expandAll() on potential #"+instanceID);
-        while(!wiresToAdd.isEmpty()){
+        while(!wiresToAdd.isEmpty() || !tilesToAdd.isEmpty()){
             //logger.info("iteration nr. "+counter);
             wiresToAdd.clear();
-            wiresToAdd = this.expandOne();
+            tilesToAdd.clear();
+
+            Pair<Collection<Integer>, Collection<Tile>> p = this.expandOne();
+
+            wiresToAdd = p.getA();
             wires.addAll(wiresToAdd);
+
+            tilesToAdd = p.getB();
+            tiles.addAll(tilesToAdd);
+
             this.checkForNewPins(wiresToAdd);
             counter++;
         }
@@ -355,50 +366,57 @@ public class Potential {
      * The method uses side effects to manipulate the pip, pin and adjacentPip fields of the object
      * @return
      */
-    private Collection<Integer> expandOne(){
+    private Pair<Collection<Integer>, Collection<Tile>> expandOne(){
         //TODO implement this method based on wires/tiles/whatever offers the best methods
         int counter = 0;
 
 
+
         // add all wires connected to all known pins
-        if (!pins.isEmpty()){
-            for (Pin pin : pins){
-                int thisPinsConnectedWire =  pin.getInstance().getPrimitiveSite().getExternalPinWireEnum(pin.getName());
-                wires.add(thisPinsConnectedWire);
-                tiles.add(pin.getTile());
-            }
+
+        for (Pin pin : pins){
+            int thisPinsConnectedWire =  pin.getInstance().getPrimitiveSite().getExternalPinWireEnum(pin.getName());
+            wires.add(thisPinsConnectedWire);
+            tiles.add(pin.getTile());
         }
+
         // add all wires which are connected to pips which are on this potential (both connectors) (and not only one connector = adjacent)
-        if(!pips.isEmpty()){
-            for (PIP pip : pips){
-                wires.add(pip.getStartWire());
-                wires.add(pip.getEndWire());
-                tiles.add(pip.getTile());
-            }
+
+        for (PIP pip : pips){
+            wires.add(pip.getStartWire());
+            wires.add(pip.getEndWire());
+            tiles.add(pip.getTile());
         }
+
         // TODO check beforehand which pips are activated on this net...
 
         // look at all connections from all wires
         Set<Integer> wiresToAdd = new HashSet<Integer>();
+        Set<Tile> tilesToAdd = new HashSet<Tile>();
         for (int existingWire : wires){
             Collection<PIP> netPIPsWithThisWire = new HashSet<PIP>(); // holds all pips with this wire as start or end point
             for (PIP pip : net.getPIPs()){
                 if (pip.getStartWire()==existingWire || pip.getEndWire()==existingWire){
                     //The net has got a pip set which has the current wire as start or end point
                     netPIPsWithThisWire.add(pip);
+                   // tiles.add(pip.getTile()); // not sure if this is necessary
                 }
             }
             // then look outgoing from every pin the potential kno, how far it reaches
-            for (Pin existingPin : pins) {
+
+            for (Tile tile : tiles){
+            //for (Pin existingPin : pins) {
                 // all coennctions which can be reched from this pin/this pin's wire
-                WireConnection[] existingConnectionsForExistingWire = existingPin.getInstance().getTile().getWireConnections(existingWire);
+               // WireConnection[] existingConnectionsForExistingWire = existingPin.getInstance().getTile().getWireConnections(existingWire);
+                WireConnection[] existingConnectionsForExistingWire = tile.getWireConnections(existingWire);
                 if (existingConnectionsForExistingWire!= null){
                     for (WireConnection wc : existingConnectionsForExistingWire) {
                         // wire can be reached directly
                         if (!wc.isPIP()) {
-                            // add to potential, and notify that something has been added
-                            if (wires.contains(wc.getWire())) counter++;
+                            // add to potential
                             wiresToAdd.add(wc.getWire());
+                            tilesToAdd.add(wc.getTile(tile));
+                            tilesToAdd.add(tile);
                         }
                         if (wc.isPIP()) {
                             // wire would have to be set to be reached. check if it is set in next steps
@@ -408,22 +426,25 @@ public class Potential {
                                 // see how it connects and add it to this potential
 
                                 if (pip.getStartWire() == wc.getWire()) {
-                                    if (pips.add(pip)) counter++;
                                     wiresToAdd.add(pip.getStartWire());
                                     wiresToAdd.add(pip.getEndWire());
+                                    tilesToAdd.add(wc.getTile(tile));
+                                    tilesToAdd.add(tile);
                                     isAdjacent = false;
 
                                 } else if (pip.getEndWire() == wc.getWire()) {
-                                    if (pips.add(pip)) counter++;
                                     wiresToAdd.add(pip.getEndWire());
                                     wiresToAdd.add(pip.getStartWire());
+                                    tilesToAdd.add(wc.getTile(tile));
+                                    tilesToAdd.add(tile);
                                     isAdjacent = false;
                                 }
                             }
                             // if the flag is not resetted, this means that there is no pip in the net connecting the wc pip
                             // which has one end wire in the potential then, but not the other. it is adjacent.
                             if (isAdjacent) {
-                                if (adjacentPIPs.add(new PIP(existingPin.getTile(), existingWire, wc.getWire()))) counter++;
+                               // if (adjacentPIPs.add(new PIP(existingPin.getTile(), existingWire, wc.getWire()))) counter++;
+                               adjacentPIPs.add(new PIP(tile, existingWire, wc.getWire()));
                             }
                         }
                     }
@@ -431,7 +452,10 @@ public class Potential {
             }
         }
         wiresToAdd.removeAll(wires);
-        return wiresToAdd;
+        tilesToAdd.removeAll(tiles);
+
+        Pair<Collection<Integer>, Collection<Tile>> returnPair = new Pair<Collection<Integer>, Collection<Tile>>(wiresToAdd, tilesToAdd);
+        return returnPair;
     }
 
     /**
@@ -472,7 +496,7 @@ public class Potential {
                 String pinSiteName = pin.getPrimitiveSitePinName();
                 if (pinWireEnumFromName==wire){
                     if (newPins.add(pin)) {
-                        //logger.info("new pin discovered - " + pin + " netSource: " + net.getSource() + " potential " + instanceID);
+                        //logger.info("new pin discovered - " + pin + " ,tile:"+ inst.getTile()+" netSource: " + net.getSource() + " potential " + instanceID);
                     }
                 }
             }
@@ -520,6 +544,13 @@ public class Potential {
         return false;
     }
 
+    /**
+     * Forces the expandAll method. For debugging reasons
+     */
+    public void forceExpansion(){
+        this.expandAll();
+    }
+
 
     /* ########################################
                   static methods
@@ -533,5 +564,31 @@ public class Potential {
         runningID++;
         return runningID;
 
+    }
+
+    private class Pair<A, B> {
+        private A a;
+        private B b;
+
+        public A getA(){
+            return a;
+        }
+
+        public B getB(){
+            return b;
+        }
+
+        public void setA(A a){
+            this.a = a;
+        }
+
+        public void setB (B b){
+            this.b = b;
+        }
+
+        public Pair(A a, B b){
+            setA(a);
+            setB(b);
+        }
     }
 }

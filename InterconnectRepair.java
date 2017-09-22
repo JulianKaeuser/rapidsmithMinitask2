@@ -1,10 +1,7 @@
 package minitask_2;
 
 import de.tu_darmstadt.rs.MoveModulesEverywhere;
-import edu.byu.ece.rapidSmith.design.Design;
-import edu.byu.ece.rapidSmith.design.Net;
-import edu.byu.ece.rapidSmith.design.PIP;
-import edu.byu.ece.rapidSmith.design.Pin;
+import edu.byu.ece.rapidSmith.design.*;
 import edu.byu.ece.rapidSmith.device.Device;
 import edu.byu.ece.rapidSmith.device.WireConnection;
 import edu.byu.ece.rapidSmith.device.WireEnumerator;
@@ -26,7 +23,7 @@ public class InterconnectRepair {
     private Design brokenDesign;
     private Device device;
     private WireEnumerator wireEnum;
-    private Boolean isFixed = false; //Flag die wir nutzen können um die Reperatur ggf. zu überspringen
+    private Boolean isBroken = false; //Flag die wir nutzen können um die Reperatur ggf. zu überspringen
 
     private Collection<Potential> potentials;
 
@@ -37,25 +34,59 @@ public class InterconnectRepair {
         this.brokenDesign = brokenDesign; //das merken wir uns
         this.device = brokenDesign.getDevice(); //das sind nur hilfs variablen
         this.wireEnum = this.device.getWireEnumerator();
-        this.isFixed = checkIfDesignBroken(brokenDesign);
-        log.info("This design is "+this.isFixed.toString());
+        this.isBroken = checkIfDesignBroken(brokenDesign);
+        log.info("This design is "+ (this.isBroken ? "broken " : "not broken"));
     }
 
     //geht
+
+    /**
+     * Returns true if broken, false if correct
+     * @param aDesign
+     * @return
+     */
     public Boolean checkIfDesignBroken(Design aDesign){
+        boolean isBroken = false;
+        int netCounter = 0;
         for (Net aNet : aDesign.getNets()){
 
             Potential soll_pot = new Potential(aDesign,aNet.getSource());
             Collection<Pin> allPins = soll_pot.getPins();
             Pin s_p = aNet.getSource();
-            log.error(s_p+" = source pin");
+            int sourceWire = aDesign.getDevice().getPrimitiveExternalPin(s_p);
+            if (netCounter<15) log.info(" ");
+            if (netCounter<15) log.info("net "+ aNet.getName());
+            if (netCounter<15) log.info(" has "+aNet.getPins().size()+" pins, "+aNet.getPIPs().size()+ " pips, sourcePin: "+aNet.getSource());
             for(Pin p : aNet.getPins()) {
             //    int wire = aDesign.getDevice().getNodeFromPin(p).getWire(); //kann auch wireConnections sein !
-                log.error(p+"");
+                //log.error(p+"");
+                int wireOfPin =  p.getInstance().getPrimitiveSite().getExternalPinWireEnum(p.getName());
                 if (!soll_pot.isPinOfPotential(p)) {
-                    return true;  
+                    isBroken = true;
+                    Potential errorPinPot = new Potential(aDesign, p);
+                    if (netCounter<15) {
+                        log.error(p + " ,tile " + p.getTile() + " is not on potential");
+
+                        if (!soll_pot.isPartlyInTile(p.getTile())) {
+                            log.error(" tile is not even on potential - existing tiles: "+soll_pot.getTiles());
+                        } else {
+                            log.info("tile "+p.getTile()+"is on potential");
+
+
+                            log.info(" wire of the pin: "+ wireEnum.getWireName(wireOfPin));
+                            //soll_pot.forceExpansion();
+                            if (soll_pot.getWires().contains(wireOfPin)){
+                                log.info(" is contained in potential");
+                            }
+                            log.info(" ");
+
+                        }
+                    }
+
                 }
+
             }
+            netCounter++;
             /*
             //ACHTUNG: pin source ist nicht kompatible mit net.getPins()! ich verwende getPins()
         //    Potential soll_pot = new Potential(aDesign,aNet.getPins().get(0));
@@ -82,7 +113,7 @@ public class InterconnectRepair {
             }
             */
         }
-        return false;
+        return isBroken;
     }
 
     public Design fixDesign(){
@@ -171,4 +202,6 @@ public class InterconnectRepair {
         return false; // nicht kapput
     }
     */
+
+
 }
