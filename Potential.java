@@ -25,7 +25,7 @@ public class Potential {
 
     private static final Logger logger = LoggerFactory.getLogger(MoveModulesEverywhere.class);
 
-    public final int instanceID;
+    private final int instanceID; //XD bitte immer private lassen und geter nutzen.
 
     private static int runningID = 0;
 
@@ -37,10 +37,10 @@ public class Potential {
 
     /**
      * Constructor based on pin
-     * @param designWrapper
+     * @param design
      * @param startPin
      */
-    public Potential(DesignPotentials designWrapper, Pin startPin){
+    public Potential(Design design, Pin startPin){
         instanceID = assignRunningID();
         wires = new HashSet<Integer>();
         pips = new HashSet<PIP>();
@@ -53,9 +53,12 @@ public class Potential {
         pins.add(startPin);
         tiles.add(startPin.getTile());
         net=startPin.getNet();
-        this.designWrapper = designWrapper;
-        this.design = designWrapper.getDesign();
+        this.design = design;
         this.expandAll();
+    }
+
+    public int getInstanceID(){
+        return this.instanceID;
     }
 
     /*
@@ -112,7 +115,7 @@ public class Potential {
         // ###############################################
 
         // The DEsignPotentials pobject which holds this potential
-        private DesignPotentials designWrapper;
+//        private DesignPotentials designWrapper;
         // all wires with this potential
         private Collection<Integer> wires;
         // the PIPs of this potential line
@@ -201,9 +204,9 @@ public class Potential {
      * Returns the wrapper object of type DesignPotentials where this Potential is part of
      * @return
      */
-    public DesignPotentials getDesignPotentials(){
+/*    public DesignPotentials getDesignPotentials(){
         return this.designWrapper;
-    }
+    } */
 
     /**
      * Returns the included pins
@@ -229,7 +232,13 @@ public class Potential {
      */
     public boolean isPinOfPotential(Pin pin){
        //if (wires.contains(pin.getInstance().getPrimitiveSite().getExternalPinWireEnum(pin.getPrimitiveSitePinName()))) return true;
-        if(pins.contains(pin)) return true;
+    //    if(pins.contains(pin)) return true; //diese Prüfung ist FALSCH
+        //ToDo effizienter machen wenn notwendig, sollte contains überschreiben !
+        for(Pin aPin : this.pins){
+            if(aPin.getInstance().getName()==pin.getInstance().getName()) //WARNING könnte falsch sein ????
+                return true;
+        }
+
         return false;
     }
     /**
@@ -300,7 +309,7 @@ public class Potential {
      * @assert this.net != other.net
      * @return the activated pip (was the parameter)
      */
-    public Potential fuse(Potential other, PIP pip){
+ /*   public Potential fuse(Potential other, PIP pip){
         if(!designWrapper.getFuseFlag()){
             return null;
         }
@@ -312,7 +321,7 @@ public class Potential {
         this.pips.add(pip);
         return this;
     }
-
+*/
     /**
      * Removes all elements from this potential
      */
@@ -320,7 +329,7 @@ public class Potential {
             wires.clear();
             pips.clear();
             adjacentPIPs.clear();
-            designWrapper = null;
+    //        designWrapper = null;
             this.design = null;
 
         //TODO check if all dependencies are removed
