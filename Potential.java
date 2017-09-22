@@ -564,21 +564,24 @@ public class Potential {
         return false;
     }
 
-    public Collection<Integer> getWireOfWire(Pin pin){
-        Collection<Integer> wires = new HashSet<Integer>();
-     //   for(Tile t : this.design.getDevice().getTiles()){
-        pin.getTile();
-        int pinWire = this.design.getDevice().getPrimitiveExternalPin(pin);
-        for(WireConnection[] wc_array : pin.getTile().getWireHashMap().values()){ //gibt uns alle wires auf die gezeigt wird
-            for(WireConnection wc : wc_array){
-                if(wc.getWire() == pinWire)
-                    return true;
-                //auf uns wird gezeigt :D
+    public Collection<Integer> getWiresOfWires(Collection<Integer> wires, Tile tileToCheck){
+        int previous_size_of_wires = 0;
+        while(wires.size()!= previous_size_of_wires) {
+            previous_size_of_wires = wires.size();
+            for (int key_wire : tileToCheck.getWireHashMap().keys) {
+                WireConnection[] value_wcs = tileToCheck.getWireHashMap().get(key_wire);
+                for (WireConnection value_wc : value_wcs) {
+                    int value_wire = value_wc.getWire();
+                    Collection<Integer> wires_to_add = new HashSet<Integer>();
+                    for (int existing_wire : wires) {
+                        if (value_wire == existing_wire) {
+                            wires_to_add.add(key_wire);
+                        }
+                    }
+                    wires.addAll(wires_to_add);
+                }
             }
-
         }
-
-
         return wires;
     }
 
