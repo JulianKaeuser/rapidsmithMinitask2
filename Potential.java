@@ -46,10 +46,12 @@ public class Potential {
         pips = new HashSet<PIP>();
         adjacentPIPs = new HashSet<PIP>();
         pins = new HashSet<Pin>();
+        tiles = new HashSet<Tile>();
 
         //TODO find out how to get from pin to wire
         wires.add(startPin.getInstance().getPrimitiveSite().getExternalPinWireEnum(startPin.getName()));
         pins.add(startPin);
+        tiles.add(startPin.getTile());
         net=startPin.getNet();
         this.designWrapper = designWrapper;
         this.design = designWrapper.getDesign();
@@ -126,6 +128,9 @@ public class Potential {
         // the net of this potential
         private Net net;
 
+
+        // List of all Tiles we have wires, pins, pips ... in
+        private Set<Tile> tiles;
 
 
         /* ###############################################
@@ -357,6 +362,7 @@ public class Potential {
             for (Pin pin : pins){
                 int thisPinsConnectedWire =  pin.getInstance().getPrimitiveSite().getExternalPinWireEnum(pin.getName());
                 wires.add(thisPinsConnectedWire);
+                tiles.add(pin.getTile());
             }
         }
         // add all wires which are connected to pips which are on this potential (both connectors) (and not only one connector = adjacent)
@@ -364,6 +370,7 @@ public class Potential {
             for (PIP pip : pips){
                 wires.add(pip.getStartWire());
                 wires.add(pip.getEndWire());
+                tiles.add(pip.getTile());
             }
         }
         // TODO check beforehand which pips are activated on this net...
@@ -496,6 +503,15 @@ public class Potential {
         return getWireCount()+getPinCount()+getPipCount();
     }
 
+    public Set<Tile> getTiles(){
+        return this.tiles;
+    }
+
+    public Boolean isPartlyInTile(Tile t){
+        if (this.tiles.contains(t))
+            return true;
+        return false;
+    }
 
 
     /* ########################################

@@ -76,6 +76,7 @@ public class KabelBaum {
             for(PIP p : this.PIPsToCheck){
                 if(wires.contains(p.getStartWire()) || wires.contains(p.getEndWire())) {
                 //    this.PIPsToCheck.remove(p); //pop
+                    //wire -> wire connection
                     removeList.add(p);
                     at_least_one_pip_used = true; //flag setzen das wir noch was machen
                     if (wires.contains(p.getStartWire()))
