@@ -551,6 +551,36 @@ public class Potential {
         this.expandAll();
     }
 
+    public Boolean checkIfWirePointsToPin(Pin pin){
+        pin.getTile();
+        int pinWire = this.design.getDevice().getPrimitiveExternalPin(pin);
+        for(WireConnection[] wc_array : pin.getTile().getWireHashMap().values()){ //gibt uns alle wires auf die gezeigt wird
+            for(WireConnection wc : wc_array){
+                if(wc.getWire() == pinWire)
+                    return true;
+                //auf uns wird gezeigt :D
+            }
+        }
+        return false;
+    }
+
+    public Collection<Integer> getWireOfWire(Pin pin){
+        Collection<Integer> wires = new HashSet<Integer>();
+     //   for(Tile t : this.design.getDevice().getTiles()){
+        pin.getTile();
+        int pinWire = this.design.getDevice().getPrimitiveExternalPin(pin);
+        for(WireConnection[] wc_array : pin.getTile().getWireHashMap().values()){ //gibt uns alle wires auf die gezeigt wird
+            for(WireConnection wc : wc_array){
+                if(wc.getWire() == pinWire)
+                    return true;
+                //auf uns wird gezeigt :D
+            }
+
+        }
+
+
+        return wires;
+    }
 
     /* ########################################
                   static methods
