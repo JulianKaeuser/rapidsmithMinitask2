@@ -1,0 +1,42 @@
+\chapter{Conclusion}
+\label{cha:conclusion}
+
+the task was to
+- examine re-placed designs' net lists
+
+- find out if something does not work
+
+- expected: only one or two PIPs are missing due to irreguar structure 
+of FPGA
+
+- if problem is encountered, find rule/mask based method to fix these 
+missing pips
+
+
+what we did was:
+
+- handle net by net 
+
+- for each Pin, determine all elements of the isoelectric it is 
+connected to (class potential)
+
+- checking method: if (potential(source)!=potential(sink) -> broken
+
+
+- for broken nets:
+
+ - search isoelectric of source, sink for adjacent, non-set PIPs 
+(interesction of sets). if !=empty set, activate this pip
+
+
+- why it did not work:
+
+  - even for correct (in terms of make file) nets, the method fails
+
+  - hand routing (function of RapidSmith framework) neither does
+
+  - we suspect missing information in fabric;
+
+  - according to the hand router, the method of "isoelectric search" 
+
+results in correct sub nets; might be useful for later work
