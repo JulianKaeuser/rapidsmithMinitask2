@@ -75,14 +75,15 @@ Before any further operation on a \texttt{Potential} may be performed, its spati
 \end{algorithm}
 
 \begin{figure}
-\includegraphics[scale=0.1]{images/Handzeichnung.jpg}
-\caption{Graphical visualization of the \texttt{Potential} derivation.}
+\centering
+\includegraphics[scale=0.8]{images/buildpotential_buildup.pdf}
+\caption{Graphical visualization of the \texttt{Potential} derivation. The wire segments and elements are enumerated in the sequence of integration. PIP IDs are in parentheses.}
 \label{fig:buildpotential}
 \end{figure}
 
 
 
-\texttt{Potential}s can be fused by setting PIPs. Electrically, this means that two isoelectric sets of elements are connected by a switch, and thus become one isoelectric potential. For the obejct representation this means that, if a pip is set, the two \texttt{Potential} objects have to be united.
+\texttt{Potential}s can be fused by setting PIPs. Electrically, this means that two isoelectric sets of elements are connected by a switch, and thus become one isoelectric potential. For the object representation this means that, if a PIP is set, the two \texttt{Potential} objects have to be united.
 
 The concept of isoelectric potentials is chosen because the search for adjacent pips wire by wire is simplified this way.
 
@@ -107,17 +108,11 @@ Figure \ref{fig:brokenpotentials} shows the case for one non-set PIP in a net. T
 As one can see, the breadth-first search runtime highly depends on the number of missing PIPs in the net. For every missing PIP, the number of elements to search is multiplied by the amount of adjacent PIPs to the Potential.
 
 \begin{figure}
-\includegraphics[scale=1]{images/brokenpotentials.pdf}
+\centering
+\includegraphics[scale=0.65]{images/brokenpotentials.pdf}
 \caption{A net with two \texttt{Potentials} which have to be connected.}
 \label{fig:brokenpotentials}
 \end{figure}
 
-Although the approach described in chapter \ref{cha:approachestotheproblem} seems promising, testing it for various example nets (conflicting and functional in terms of the ISE \texttt{xdl} output) did not lead to the expected results. Therefore, we examined the reasons, implementation and other possible error sources.
 
-\section{Hand Routing}
-\label{sec:handrouting}
-
-The RapidSmith framework has some built-in example classes, which are designed to help the user understand the way RapidSmith works. One of these classes is the \texttt{HandRouter}, which allows the routing of a net through a console. It displays reacheable wires at the next iteration and adds PIPs as the route is chosen. We used and adapted the \texttt{HandRouter} to manually examine broken nets. Working on complete \texttt{.xdl}-files only, we adapted the router to work on single nets, and inserted it after the potential derivation.
-
-Using the HandRouter reveals several error sources, but also that each connection reacheable from each pin is correctly integrated in the pin's \texttt{Potential} instance. 
 
