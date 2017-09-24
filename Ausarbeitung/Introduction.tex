@@ -1,5 +1,18 @@
 \chapter{Introduction}
 \label{cha:introduction}
 
-\section{stuff}
-\label{sec:stuff}
+Routing and Placement are two necessary and time-consuming steps in the FPGA synthesis toolchain. Optimizations for module design in these steps speed up or enhance the FPGA design process significantly. RapidSmith \cite{lavin} allows the implementation of these steps in a Java framework. It offers an API to read in Xilinx designs and FPGA descriptions, and offers researchers the possibility to approach placement and routing problems in an object-oriented way. In RapidSoC, a project based on RapidSmith, a re-placement method for already placed and routed modules is integrated. Although this method works for a majority of modules, some modules routing elements cannot be re-placed due to irregular structures in the FPGA fabric. In this project, the cause for these errors is examined, and an approach to fix them is introduced.
+
+The report is structured as following. First, the exact problem description is presented. The designed approach to the problem using isoelectric planes is described. Then, the insights gained are presented. Finally, future work is proposed, and the report is concluded.
+
+
+\section{Task Description}
+\label{sec:taskdescription}
+Since the fabric of FPGAs is in general regular, the expected error source for designs at different locations are irregularities regarding the routing elements in the fabric. In the current state, the nets of the design have to be re-routed, which is time-consuming. Since we guess that only 1-2 programmable interconnect points ("PIPs") are set falsely, a detection and repair of the conflicting nets promises faster processing. 
+
+\section{Framework and Environment}
+\label{sec:frameworkandenvironment}
+
+This project is embedded into the RapidSmith java environment, version a.b.c. Classes of the RapidSoC framework, especially the class \texttt{MoveModulesEverywhere}, are the basis of our work. \texttt{MoveModulesEverywhere} parses existing designs from \texttt{.xdl} files into the RapidSmith environment, places the included modules on any feasible destination, and generates the corresponding \texttt{.xdl} output files. Further processing is accomplished with Xilinx ISE \cite{ise}. Based on the output of the ISE processing, the re-placed designs can be evaluated to be functional or conflicting.
+
+All processing developed in this project is performed in a separate Java package. Every re-placed design is extracted before the output step, so that the developed methods can be applied to a \texttt{Design} object.
