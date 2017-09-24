@@ -1,12 +1,28 @@
-\chapter{Approaches to the Problem}
+\chapter{Generall Approache to the Problem}
 \label{cha:approachestotheproblem}
 
-\section{Isoelectric Plane Search}
-\label{sec:isolelectricplanesearch}
+In order to fix the possibly broken design it is necessary to identify which part of the design is unusable and determine if and how that part can be modified.
 
-here we tell about the potential stuff
+Each design can be viewed in RapidSmith as a set of net objects. According to the RapidSmith documentation CITE! these net objects hold all used pin, wires and pips.
+Therefore it should be possible to reach all output pins of a net by following wires connected to the input pin if the net is not broken.
+Consequently each design is broken if it is not possible to reach the output pins of an net from the input pin.  
 
-\section{Hand Routing}
-\label{sec:handrouting}
+A net in RapidSmith only contains PIPs that are currently "switched on" CITE. Therefore a net can be expanded if additional PIPs are switched on. 
+It is theorized that it is possible to fix the broken net by switching on PIPs which reconnect the pins with each other. This can only be done when the PIP will not connect the circute to an undesired third circute.
 
-handrouting tells us that bullshit is happening
+To check whether or not a net can be traversed from it's source pin to all output pins an new measurement called Potential was introduced into RapidSmith.
+A Potential can be seen as an value or ID attached to each pin, pip and wire of an net. Also does the Potential contain which pins,pips and wires have a certain potential. The direction of an wire has no influence on the potential.
+It is never possible for an pin, pip or wire to be in two potentials at the same time. It is not possible that two not connected elements have the same Potential. 
+This concept is named after the concept of isoelectric potentials found in classical electronics but it is notable that there can not be two potentials with the same value as long as there are not connected.
+
+In order to check if an net is broken the potential of each pin is calculated and compared. If the net contains more than one unique potential then the net is broken.
+In that case it is necessary to reconnect the two parts (potentials) of that net. This can be done with the applying the following simply breadth-first-search algorithmen on Potential A and B:
+
+Let \textit{leaves} be an order priority queue which holds only PIPs that do not connect to other potential besides B. \textit{leaves} is ordered by the number of wires between the PIP and Potential A.
+
+Put into \textit{leaves} all adjacent PIPs of A.
+While \textit{leaves} not empty do:
+	Get first PIP of \textit{leaves}
+	If PIP has Potential B then done
+	Add all adjecenten PIPs to leaves
+
