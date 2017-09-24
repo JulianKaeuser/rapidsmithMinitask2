@@ -21,9 +21,9 @@ A WireConnection is a wrapper class for a \texttt{wire} and holds the informatio
 \item \textbf{Node}\hfill \\
 A Node is a routing object used in the router package. It can be used to describe routes of \texttt{wires} and \texttt{PIPs} in a router.
 \item \textbf{SinkPin}\hfill \\
-A SinkPin refers to a switch matrix on the FPGA. Nearly all pins' wires are connected to a switch matrix, which is an interface to the other wires
+A SinkPin refers to a switch matrix on the FPGA. Nearly all pins' wires are connected to a switch matrix, which is an interface to the other wires. SinkPins have to be viewed if a connected Pin of a wire shall be found.
 \item \textbf{Tile}\hfill \\
-A Tile is one of the checkerboard-lie distributed areas on an FPGA. It holds various elements from the list above and a set of logic elements. 
+A Tile is one of the checkerboard-like distributed areas on an FPGA. It holds various elements from the list above and a set of logic elements. 
 
 \end{itemize}
 
@@ -84,15 +84,17 @@ Given this method, a \texttt{Potential} derived for one pin must always hold any
 
 \texttt{Potential}s can be fused by setting PIPs. Electrically, this means that two isoelectric sets of elements are connected by a switch, and thus become one isoelectric potential. For the obejct representation this means that, if a pip is set, the two \texttt{Potential} objects have to be united.
 
+The concept of isoelectric potentials is chosen because the search for adjacent pips wire by wire is simplified this way.
+
 
 
 \section{Finding and Reparing broken Nets}
 \label{sec:findingandrepairingbrokennets}
 
 In order to check if an net is broken the potential of each pin is calculated and compared. If the net contains more than one unique potential then the net is broken.
-In that case it is necessary to reconnect the two parts (potentials) of that net.If the assumption that only one or two PIPs are missing is true, this can be done by the applying the following simply breadth-first-search on the \texttt{Potential}s of pins A and B:
+In that case it is necessary to reconnect the two parts (potentials) of that net.If the assumption that only one or two PIPs are missing is true, this can be done by the applying the following breadth-first-search on the \texttt{Potential}s of pins A and B:
 
-Let \textit{leaves} be an order priority queue which holds only PIPs that do not connect to other potential besides B. \textit{leaves} is ordered by the number of wires between the PIP and Potential A.
+Let \textit{leaves} be an ordered priority queue which holds only PIPs that do not connect to other potential besides B. \textit{leaves} is ordered by the number of wires between the PIP and Potential A.
 
 Put into \textit{leaves} all adjacent PIPs of A.
 While \textit{leaves} not empty do:
@@ -100,4 +102,22 @@ While \textit{leaves} not empty do:
 	If PIP has Potential B then done
 	Add all adjecenten PIPs to leaves
 
-c
+Figure \ref{fig:brokenpotentials} shows the case for one non-set PIP in a net. The net specifies two pins, A and B. For both pins, the \texttt{Potential} has been determined. Clearly marked are the included wires, PIPs and other pins. PIP 215 is adjacent to both potentials. The breadth-first-search finds PIP 215 to be adjacent to both pins' potentials, so this PIP has to be set (a \texttt{PIP} instance is created for the conencted \texttt{wires} and added to the net). For situations where more than one PIP has to be set, the breadth-first-search steps one level down the search tree and repeats the search on every leaf. By going one level deeper, the first PIP in the priority queue has to be set.
+
+As one can see, the breadth-first search runtime highly depends on the number of missing PIPs in the net. For every missing PIP, the number of elements to search is multiplied by the amount of adjacent PIPs to the Potential.
+
+\begin{figure}
+\includegraphics[scale=1]{images/brokenpotentials.pdf}
+\caption{A net with two \texttt{Potentials} which have to be connected.}
+\label{fig:brokenpotentials}
+\end{figure}
+
+Although the approach described in chapter \ref{cha:approachestotheproblem} seems promising, testing it for various example nets (conflicting and functional in terms of the ISE \texttt{xdl} output) did not lead to the expected results. Therefore, we examined the reasons, implementation and other possible error sources.
+
+\section{Hand Routing}
+\label{sec:handrouting}
+
+The RapidSmith framework has some built-in example classes, which are designed to help the user understand the way RapidSmith works. One of these classes is the \texttt{HandRouter}, which allows the routing of a net through a console. It displays reacheable wires at the next iteration and adds PIPs as the route is chosen. We used and adapted the \texttt{HandRouter} to manually examine broken nets. Working on complete \texttt{.xdl}-files only, we adapted the router to work on single nets, and inserted it after the potential derivation.
+
+Using the HandRouter reveals several error sources, but also that each connection reacheable from each pin is correctly integrated in the pin's \texttt{Potential} instance. 
+
