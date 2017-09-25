@@ -9,21 +9,21 @@ In this chapter, our approach to find and repair conflicting spots in the netlis
 Since the RapidSmith API define multiple elements involved in the routing process, a short overview over these elements is given in the following list:
 \begin{itemize}
 \item \textbf{Wire}\hfill \\
-A Wire is the basic connection element. It is represented as an integer due to the large number of wires on an FPGA. Wires can be hard connected to other wires, which can be determined through the \texttt{Device} class.
+A Wire is the basic connection element. It is represented as an integer due to the large number of wires on an FPGA. Wires can be hard (not reroutable) connected to other wires, which can be determined through the \texttt{Device} class. %A wire can have a certain direction, however this feature is not used in this work.
 \item \textbf{Pin}\hfill \\
-A Pin connects an input or output of a logic block to routing resources. It is primarily connected to one \texttt{wire}, and may be defined as output or input pin.
+A Pin connects an input or output of a logic block to other routing resources. It is primarily connected to one \texttt{wire}, and may be defined as output or input pin.
 \item \textbf{PIP}\hfill \\
 A PIP object describes an active connection between two wires, which are attributes to the object. If it is contained in a \texttt{net}, is is switched on. Otherwise, it remains turned off.
 \item \textbf{Net}\hfill \\
-A Net gathers a list of connected pins and active PIPs. It also has a defined source pin driving the net.
+A Net describes a list of connected pins and active PIPs. It also has a defined source pin driving the net.
 \item \textbf{WireConnection}\hfill \\
-A WireConnection is a wrapper class for a \texttt{wire} and holds the information whether this wire is only reacheable if a PIP is turned on. This class is used to get information about the connectable wires on the FPGA.
+A WireConnection is a wrapper class for a \texttt{wire} and holds the information whether or not the wire is only reachable if an PIP is turned on. This class is used to get information about the connectable wires on the FPGA.
 \item \textbf{Node}\hfill \\
 A Node is a routing object used in the router package. It can be used to describe routes of \texttt{wires} and \texttt{PIPs} in a router.
 \item \textbf{SinkPin}\hfill \\
-A SinkPin refers to a switch matrix on the FPGA. Nearly all pins' wires are connected to a switch matrix, which is an interface to the other wires. SinkPins have to be viewed if a connected pin of a wire shall be found.
+A SinkPin refers to a switch matrix on the FPGA. Nearly all pin wires are connected to a switch matrix, which is an interface to the other wires. SinkPins have to be viewed if a connected pin of a wire shall be found.
 \item \textbf{Tile}\hfill \\
-A Tile is one of the checkerboard-like distributed areas on an FPGA. It holds various elements from the list above and a set of logic elements. 
+A Tile is one specific area of an FPGA. The FPGA consists of several Tiles placed in a checkerboard-like formation. Each tile holds various elements from the list above and a set of logic elements. 
 
 \end{itemize}
 
@@ -31,18 +31,18 @@ A Tile is one of the checkerboard-like distributed areas on an FPGA. It holds va
 \label{sec:isolectricelements}
 
 Each design's routing in RapidSmith can be viewed as a set of \texttt{Net} objects. According to the RapidSmith documentation \cite{rapidsmith}, these \texttt{Net} objects hold all used pins and pips of the net.
-Therefore it should be possible to reach all sink pins of a net by following wires connected to the input pin if the net is not broken.
-Consequently each design is broken if it is not possible to reach the output pins of an net from the input pin.  
+Therefore it should be possible to reach all sink pins of a net by following wires connected to the input pin (source pin) if the net is not broken.
+Consequently a design is broken if it is not possible to reach all the output pins of at least one net from the input pin.  
 
 A \texttt{Net} in RapidSmith only contains \texttt{PIP} objects representing PIPs that are currently "switched on", but no \texttt{Wires}. Therefore, a net can be expanded if additional PIPs are switched on. 
-It is theorized that it is possible to fix the broken net by switching on PIPs which reconnect the net's pins' connected wires with each other. This can only be done when the PIP will not connect the circuit to an independent third circuit.
+It is theorized that it is possible to fix the broken net by switching on PIPs which reconnect the net's pins connected wires with each other. This can only be done when the PIP will not connect the circuit to an independent third circuit.
 
-To check whether or not a net can be traversed from it's source pin to all output pins an new measurement called \texttt{Potential} is introduced into RapidSmith.
-A \texttt{Potential} can be seen as the isoelectric set of wires, pins and PIPs which are connected, starting from one pin.
+To check whether or not a net can be traversed from it's source pin to all output pins a new measurement called \texttt{Potential} is introduced into RapidSmith.
+A \texttt{Potential} can be seen as a set of wires, pins and PIPs which are all connected. %, starting from one pin.
 It is never possible for a \texttt{Pin}, \texttt{PIP} or \texttt{Wire} to be in two \texttt{Potential}s at the same time. It is not possible that two non-connected elements have the same \texttt{Potential}. 
-This concept is named after the concept of isoelectric potentials found in classical electronics. Although two electrical potentials may be at the same numeric voltage level and still be different (not isoelectric), this is not the case for the introduced potentials.
+This concept is named after the concept of isoelectric potentials found in classical electronics. Although two electrical potentials may be at the same numeric voltage level and still be different (not isoelectric), this is not the case for the introduced potentials. Each \texttt{Potential} is unique and if two \texttt{Potential} are connected by introducing new \texttt{PIP}s or \texttt{Wire}s into the systems one of the two is discarded.
 
-Before any further operation on a \texttt{Potential} may be performed, its spatial spread must be computed. This means that, starting from a pin, each electrically connected wire, pin and pip must be found. The search for connected elements works as described in algorithm \ref{alg:findindpotential}. It is also pointed graphically in Figure \ref{fig:buildpotential}. Given this method, a \texttt{Potential} derived for one pin must always hold any other pin in the net if the net is routed correctly.
+Before any further operation on a \texttt{Potential} may be performed, its spatial spread must be computed. This means that, starting from a pin, each electrically connected wire, pin and pip must be found. The search for connected elements works as described in algorithm \ref{alg:findindpotential}. This principle is also shown in Figure \ref{fig:buildpotential}. Given this method, a \texttt{Potential} derived for one pin must always hold any other pin in the net if the net is routed correctly.
 
 \begin{algorithm}[h]
 	wires = \{wireOf(sourcePin)\};\\
@@ -97,7 +97,7 @@ In that case it is necessary to reconnect the two parts (potentials) of that net
 There is a priority queue \textit{leaves} which holds only PIP-elements that do not connect to other \texttt{Potential}s besides B. 
 Each of these elements has a parent PIP which introduced the PIP into the queue. \textit{Leaves} is ordered by the number of parents between the PIP and Potential A in ascending order. Algorithm \ref{alg:breadth-first-search} points out the search on that priority queue.
 
-\begin{algorithm}[h]
+\begin{algorithm}[h!]
 	add all adjacent PIPs of A to leaves;\\
 	\While{leaves.size() > 0}{
 		PIP pip = leaves.pop(); \\
