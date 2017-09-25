@@ -115,7 +115,7 @@ public class InterconnectRepair {
                         //log.info("tile "+pin.getTile()+"is on potential");
 
 
-                       // log.info(" wire of the pin: "+ wireEnum.getWireName(externalWireOfPin));
+                       // log.info(" wire of the pin: "+ wireEnum.getWireName(externalWireOfPin));   
                         //sourcePotential.forceExpansion();
                         if (sourcePotential.getWires().contains(externalWireOfPin)){
                             //log.info(" is contained in potential");
