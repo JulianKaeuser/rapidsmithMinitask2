@@ -1,7 +1,14 @@
 \chapter{Insights}
 \label{cha:insights}
 
-In the process of the task, we found out that... X Y Z doesn't work as expected
+Although the approach described in chapter \ref{cha:approachestotheproblem} seems promising, testing it for various example nets (conflicting and functional in terms of the ISE \texttt{xdl} output) did not lead to the expected results. Therefore, we examined the reasons, implementation and other possible error sources.
+
+\section{Hand Routing}
+\label{sec:handrouting}
+
+The RapidSmith framework has some built-in example classes, which are designed to help the user understand the way RapidSmith works. One of these classes is the \texttt{HandRouter}, which allows the routing of a net through a console. It displays reacheable wires at the next iteration and adds PIPs as the route is chosen. We used and adapted the \texttt{HandRouter} to manually examine broken nets. Working on complete \texttt{.xdl}-files only, we adapted the router to work on single nets, and inserted it after the potential derivation.
+
+Using the HandRouter reveals several error sources, but also that each connection reacheable from each pin is correctly integrated in the pin's \texttt{Potential} instance. 
 
 \section{Possible Solutions}
 \label{sec:possibleSolutions}
