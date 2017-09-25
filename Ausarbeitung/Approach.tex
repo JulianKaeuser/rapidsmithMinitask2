@@ -96,14 +96,17 @@ The concept of isoelectric potentials is chosen because the search for adjacent 
 In order to check if an net is broken the potential of each pin is calculated and compared. If the net contains more than one unique potential then the net is broken.
 In that case it is necessary to reconnect the two parts (potentials) of that net. If the assumption that only one or two PIPs are missing is true, this can be done by the applying the following breadth-first-search on the \texttt{Potential}s of pins A and B:
 
+There is a priority queue \textit{leaves} which holds only PIP-elements that do not connect to other \texttt{Potential}s besides B. 
+Each of these elements has a parent PIP which introduced the PIP into the queue. \textit{Leaves} is ordered by the number of parents between the PIP and Potential A in ascending order. Algorithm \ref{alg:breadth-first-search} points out the search on that priority queue.
+
 \begin{algorithm}[H]
 	add all adjacent PIPs of A to leaves;\\
 	\While{leaves.size() > 0}{
 		PIP pip = leaves.pop(); \\
-		\If{Potential B contains pip}{
+		\If{Potential B.contains(pip)}{
 			return pip; // we can determine the connection trough the parent PIPs;\\
 		}
-		\ForEach{PIP p $\in$  adjacentPIPs(potential of pip)}{
+		\ForEach{PIP p $\in$  adjacentPIPs(pip)}{
 			\If{p!=pip.parent}{
 				leaves.push(p); //if p is of an other potential than B we cannot add it ;\\
 				}
@@ -112,11 +115,6 @@ In that case it is necessary to reconnect the two parts (potentials) of that net
  \caption{Exemplary algorithm to determine missing PIPs by breadth-first-search}
  \label{alg:breadth-first-search}
 \end{algorithm}
-
-
-There is a priority queue \textit{leaves} which holds only PIP-elements that do not connect to other \texttt{Potential}s besides B. 
-Each of these elements has a parent PIP which introduced the PIP into the queue. \textit{Leaves} is ordered by the number of parents between the PIP and Potential A in ascending order. Algorithm \ref{alg:breadth-first-search} points out the search on that priority queue.
-
 
 
 Figure \ref{fig:brokenpotentials} shows the case for one non-set PIP in a net. The net specifies two pins, A and B. For both pins, the \texttt{Potential} has been determined. Clearly marked are the included wires, PIPs and other pins. PIP 215 is adjacent to both potentials. The breadth-first-search finds PIP 215 to be adjacent to both pins' potentials, so this PIP has to be set (a \texttt{PIP} instance is created for the connected \texttt{wires} and added to the net). For situations where more than one PIP has to be set, the breadth-first-search steps one level down the search tree and repeats the search on every leaf. By going one level deeper, the first PIP in the priority queue has to be set.
