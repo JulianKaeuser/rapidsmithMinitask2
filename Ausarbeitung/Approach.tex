@@ -93,11 +93,28 @@ The concept of isoelectric potentials is chosen because the search for adjacent 
 \label{sec:findingandrepairingbrokennets}
 
 In order to check if an net is broken the potential of each pin is calculated and compared. If the net contains more than one unique potential then the net is broken.
-In that case it is necessary to reconnect the two parts (potentials) of that net.If the assumption that only one or two PIPs are missing is true, this can be done by the applying the following breadth-first-search on the \texttt{Potential}s of pins A and B:
+In that case it is necessary to reconnect the two parts (potentials) of that net. If the assumption that only one or two PIPs are missing is true, this can be done by the applying the following breadth-first-search on the \texttt{Potential}s of pins A and B:
 
-Let \textit{leaves} be an ordered priority queue which holds only PIPs that do not connect to other potential besides B. \textit{leaves} is ordered by the number of wires between the PIP and Potential A.
+There is a priority queue with the name \textit{leaves} which holds only PIP-elements that do not connect to other potential besides B. 
+Each of these elements has a parent PIP which introduced the PIP into the queue. \textit{leaves} is ordered by the number of parents between the PIP and Potential A in ascending order.
 
-Put into \textit{leaves} all adjacent PIPs of A.
+\begin{algorithm}[h]
+	leaves.addAll(potenialA.getAdjacentPIPs());\\
+	\While{leaves.size() > 0}{
+		PIPElement pip = leaves.pop(); \\
+		\If{potenialB.isPIPOfPotential(pip)}{
+			return pip; // we can determine the connection trough the parent PIPs
+		}
+		\ForEach{PIP p in pip.getAdjacentPIPs}{
+			If{p!=pip.parent}
+				leaves.push(p); //if p is of an other potenial then B we can not add it 
+		}
+	}
+ \caption{Exemplary algorithm to determine missing PIPs by breadth-first-search}
+ \label{alg:breadth-first-search}
+\end{algorithm}
+
+
 While \textit{leaves} not empty do:
 	Get first PIP of \textit{leaves}
 	If PIP has Potential B then done
