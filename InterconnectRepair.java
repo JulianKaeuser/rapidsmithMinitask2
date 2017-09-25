@@ -2,19 +2,16 @@ package minitask_2;
 
 import de.tu_darmstadt.rs.MoveModulesEverywhere;
 import edu.byu.ece.rapidSmith.design.*;
-import edu.byu.ece.rapidSmith.device.Device;
-import edu.byu.ece.rapidSmith.device.WireConnection;
-import edu.byu.ece.rapidSmith.device.WireEnumerator;
+import edu.byu.ece.rapidSmith.device.*;
+import edu.byu.ece.rapidSmith.router.Node;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import edu.byu.ece.rapidSmith.device.Tile;
-import org.w3c.dom.html.HTMLTableColElement;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 
 /**
+ * Class which is responsible to extract the re-placed design, examine it regarding the error, if possile fix it, and return it.
  * Created by Julian Käuser on 14.09.17.
  */
 public class InterconnectRepair {
@@ -28,97 +25,112 @@ public class InterconnectRepair {
     private Collection<Potential> potentials;
 
     /*
-    This class holds the minitask 2 invocation methods etc. Created mainly for testing reasons. Also to be lazy with the git
+    This class holds the minitask 2 invocation methods etc. Created mainly for testing reasons.
      */
     public InterconnectRepair(Design brokenDesign){
         this.brokenDesign = brokenDesign; //das merken wir uns
         this.device = brokenDesign.getDevice(); //das sind nur hilfs variablen
         this.wireEnum = this.device.getWireEnumerator();
         this.isBroken = checkIfDesignBroken(brokenDesign);
-        log.info("This design is "+ (this.isBroken ? "broken " : "not broken"));
+        log.info("This design is "+ (this.isBroken ? "conflicting " : "not conflicting"));
     }
-
-    //geht
 
     /**
      * Returns true if broken, false if correct
-     * @param aDesign
+     * @param design
      * @return
      */
-    public Boolean checkIfDesignBroken(Design aDesign){
+    public Boolean checkIfDesignBroken(Design design){
         boolean isBroken = false;
-        int netCounter = 0;
-        for (Net aNet : aDesign.getNets()){
+        for (Net net : design.getNets()){
+            AdaptedHandRouter.routeHand(design, net);
+            System.exit(0);
+            Potential sourcePotential = new Potential(design,net.getSource());
+            Collection<Pin> allPins = sourcePotential.getPins();
 
-            Potential soll_pot = new Potential(aDesign,aNet.getSource());
-            Collection<Pin> allPins = soll_pot.getPins();
-            Pin s_p = aNet.getSource();
-            int sourceWire = aDesign.getDevice().getPrimitiveExternalPin(s_p);
-            if (netCounter<15) log.info(" ");
-            if (netCounter<15) log.info("net "+ aNet.getName());
-            if (netCounter<15) log.info(" has "+aNet.getPins().size()+" pins, "+aNet.getPIPs().size()+ " pips, sourcePin: "+aNet.getSource());
-            for(Pin p : aNet.getPins()) {
-            //    int wire = aDesign.getDevice().getNodeFromPin(p).getWire(); //kann auch wireConnections sein !
-                //log.error(p+"");
-                int wireOfPin =  p.getInstance().getPrimitiveSite().getExternalPinWireEnum(p.getName());
-                if (!soll_pot.isPinOfPotential(p)) {
-                    isBroken = true;
-                    Potential errorPinPot = new Potential(aDesign, p);
-                    if (netCounter<15) {
-                        log.error(p + " ,tile " + p.getTile() + " is not on potential");
+            Pin sourcePin= net.getSource();
+            int sourcePinExternalWire = design.getDevice().getPrimitiveExternalPin(sourcePin);
+            /*
+            Node sourcePinNode = new Node(sourcePin.getTile(), sourcePinExternalWire, null, 0);
+            WireConnection[] startableWires = sourcePin.getTile().getWireConnections(sourcePinNode.getWire());
 
-                        if (!soll_pot.isPartlyInTile(p.getTile())) {
-                            log.error(" tile is not even on potential - existing tiles: "+soll_pot.getTiles());
-                        } else {
-                            log.info("tile "+p.getTile()+"is on potential");
+            //Node sourceSwitchMatrixSink = sourcePinNode.getSwitchBoxSink(design.getDevice()); throws nullpointe rbecause of missing sink for the wire
+            */
+
+                /*
+                log.info(" ");
+                log.info("net " + net);
+                log.info(" has " + net.getPins().size() + " pins, " + net.getPIPs().size() + " pips, sourcePin: " + net.getSource());
+                log.info(" source pin :                 "+ sourcePin);
+                log.info(" source pin wire:             "+ sourcePinExternalWire);
+                */
 
 
-                            log.info(" wire of the pin: "+ wireEnum.getWireName(wireOfPin));
-                            //soll_pot.forceExpansion();
-                            if (soll_pot.getWires().contains(wireOfPin)){
-                                log.info(" is contained in potential");
-                            }
-                            log.info(" ");
+            // iterate all pins in net
+            for(Pin pin : net.getPins()) {
+                if (pin.equals(sourcePin)){
+                    continue;
+                }
 
-                        }
+                int externalWireOfPin =  design.getDevice().getPrimitiveExternalPin(pin);
+                /*
+                System.out.println("                                               handling pin "+ pin);
+                log.info("     externalWire:        "+externalWireOfPin);
+                */
+
+                Node pinSinkNode = new Node(pin.getTile(), externalWireOfPin, null, 0 ); // the node for this pin - directly connected
+                SinkPin pinSinkPin = pinSinkNode.getSinkPin();
+                Node switchMatrixSink;
+                if (pinSinkPin!=null) {
+                    int pinSwitchMatrixWire = pinSinkPin.switchMatrixSinkWire;
+                    log.info("     pinSwitchMatrixWire: " + pinSwitchMatrixWire);
+                    boolean isContained = sourcePotential.isWireOfPotential(pinSwitchMatrixWire);
+                    log.error("     " + (isContained ? "is " : "is not ") + "contained in potential");
+                    switchMatrixSink = pinSinkNode.getSwitchBoxSink(design.getDevice());
+
+
+                    Potential sinkPinPotential = new Potential(design, pin);
+                }
+
+
+               // log.error(" switchMatrixSinkWire of pin"+ p+ " = "+handRouterTypeWire);
+                if (!sourcePotential.isPinOfPotential(pin)) {
+                    Collection<Integer> pointers = checkIfWirePointsToPin(design, pin);
+                    // basically, it is broken at this point
+
+                    if (!pointers.isEmpty()){
+                       // log.info("something points to this pin : "+pin+" " + pointers);
                     }
 
-                }
+                    /*
+                    comment this in or replace with "return true;" if funtion shall be used. For analysis reasons, this is skipped
+                     */
+                    isBroken = true;
 
-            }
-            netCounter++;
-            /*
-            //ACHTUNG: pin source ist nicht kompatible mit net.getPins()! ich verwende getPins()
-        //    Potential soll_pot = new Potential(aDesign,aNet.getPins().get(0));
-            Potential soll_pot = new Potential(aDesign,aNet.getSource());
-            for(PIP aPIP : aNet.getPIPs()){
-                log.error(""+soll_pot.isPIPOfPotential(aPIP));
-                if (!soll_pot.isPIPOfPotential(aPIP)) {
-                    return true;
+                    Potential errorPinPotential = new Potential(design, pin);
+
+                    if (!sourcePotential.isPartlyInTile(pin.getTile())) {
+                            //log.error(" tile is not even on potential - existing tiles: "+sourcePotential.getTiles());
+                    } else {
+                        //log.info("tile "+pin.getTile()+"is on potential");
+
+
+                       // log.info(" wire of the pin: "+ wireEnum.getWireName(externalWireOfPin));
+                        //sourcePotential.forceExpansion();
+                        if (sourcePotential.getWires().contains(externalWireOfPin)){
+                            //log.info(" is contained in potential");
+                        }
+                        //log.info(" ");
+                    }
                 }
             }
-            */
-            /*
-            Potential soll_pot = new Potential(aDesign,aNet.getSource());
-            Collection<Pin> allPins = soll_pot.getPins();
-            int a = 54;
-            Pin np = aNet.getSource();
-            log.error(aDesign.getDevice().getNodeFromPin(np).getWire()+"");
-            for(Pin p : aNet.getPins()) {
-                int wire = aDesign.getDevice().getNodeFromPin(p).getWire(); //kann auch wireConnections sein !
-                log.error(wire+"");
-                if (!soll_pot.isWireOfPotential(wire)) {
-                    return true;
-                }
-            }
-            */
         }
         return isBroken;
     }
 
     public Design fixDesign(){
-        for (Net aNet : this.brokenDesign.getNets()){
-            for(Pin p : aNet.getPins()) {
+        for (Net net : this.brokenDesign.getNets()){
+            for(Pin p : net.getPins()) {
                 Potential pot = new Potential(this.brokenDesign, p);
             }
         }
@@ -202,6 +214,51 @@ public class InterconnectRepair {
         return false; // nicht kapput
     }
     */
+
+
+    /**
+     * Returns a collection of all wires poiting to this pin.
+     * @param design
+     * @param pin
+     * @return
+     */
+    public static Collection<Integer> checkIfWirePointsToPin(Design design, Pin pin){
+        Collection<Integer> ret = new HashSet<Integer>();
+        int pinWire = design.getDevice().getPrimitiveExternalPin(pin);
+        Collection<Integer> a = pin.getTile().getWireHashMap().keySet();
+        for (Integer key : a){
+            WireConnection[] valueWC = pin.getTile().getWireHashMap().get(key);
+             //gibt uns alle wires auf die gezeigt wird
+            for(WireConnection wc : valueWC){
+                if(wc.getWire() == pinWire)
+                    ret.add(key);
+                //auf uns wird gezeigt :D
+            }
+        }
+        return ret;
+    }
+
+
+    /**
+     * Check if there is some wire pointing to this pin
+     * @param design
+     * @param pin
+     * @param tile
+     * @return
+     */
+    public Boolean checkIfWirePointsToPinBool(Design design, Pin pin, Tile tile){
+        int pinWire = design.getDevice().getPrimitiveExternalPin(pin);
+        if (tile.getWireHashMap()!=null) {
+            for (WireConnection[] wc_array : tile.getWireHashMap().values()) { //gibt uns alle wires auf die gezeigt wird
+                for (WireConnection wc : wc_array) {
+                    if (wc.getWire() == pinWire)
+                        return true;
+                    //auf uns wird gezeigt :D
+                }
+            }
+        }
+        return false;
+    }
 
 
 }

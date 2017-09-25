@@ -5,6 +5,7 @@ import edu.byu.ece.rapidSmith.design.*;
 import edu.byu.ece.rapidSmith.device.PrimitiveSite;
 import edu.byu.ece.rapidSmith.device.Tile;
 import edu.byu.ece.rapidSmith.device.WireConnection;
+import edu.byu.ece.rapidSmith.router.Node;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +27,7 @@ public class Potential {
 
     private static final Logger logger = LoggerFactory.getLogger(MoveModulesEverywhere.class);
 
-    private final int instanceID; //XD bitte immer private lassen und geter nutzen.
+    private final int instanceID;
 
     private static int runningID = 0;
 
@@ -49,7 +50,6 @@ public class Potential {
         pins = new HashSet<Pin>();
         tiles = new HashSet<Tile>();
 
-        //TODO find out how to get from pin to wire
         wires.add(startPin.getInstance().getPrimitiveSite().getExternalPinWireEnum(startPin.getName()));
         pins.add(startPin);
         tiles.add(startPin.getTile());
@@ -58,12 +58,17 @@ public class Potential {
         this.expandAll();
     }
 
+    /**
+     * Returns the unique ID of this object
+     * @return
+     */
     public int getInstanceID(){
         return this.instanceID;
     }
 
     /*
     /**
+     * deprecated
      * Defines the first point of the Potential and therefore the first "wire tree"
      * @param startWire the first piece of metal, as wire
      *
@@ -75,7 +80,7 @@ public class Potential {
         pins = new HashSet<Pin>();
 
         wires.add(startWire);
-        //TODO find out how to get from wire to net etc
+
         net=null;
 
         this.designWrapper = designWrapper;
@@ -87,6 +92,7 @@ public class Potential {
 
 
     /**
+     * deprecated
      * Constructor with pip as the first point of the potential
      * @param designWrapper
      * @param startPip
@@ -99,7 +105,6 @@ public class Potential {
 
         wires.add(startPip.getStartWire());
         wires.add(startPip.getEndWire());
-        //TODO find out how to get from wire to net etc
         net=null;
         pips.add(startPip);
 
@@ -115,24 +120,18 @@ public class Potential {
         //             attributes
         // ###############################################
 
-        // The DEsignPotentials pobject which holds this potential
-//        private DesignPotentials designWrapper;
         // all wires with this potential
         private Collection<Integer> wires;
         // the PIPs of this potential line
         private Collection<PIP> pips;
         // all pips which can connect this potential to another potential (=fuse)
         private Collection<PIP> adjacentPIPs;
-
+        // all pins of the net
         private Collection<Pin> pins;
-
         // The design where this potential is embedded
         private Design design;
-
         // the net of this potential
         private Net net;
-
-
         // List of all Tiles we have wires, pins, pips ... in
         private Set<Tile> tiles;
 
@@ -202,14 +201,6 @@ public class Potential {
     }
 
     /**
-     * Returns the wrapper object of type DesignPotentials where this Potential is part of
-     * @return
-     */
-/*    public DesignPotentials getDesignPotentials(){
-        return this.designWrapper;
-    } */
-
-    /**
      * Returns the included pins
      * @return
      */
@@ -232,8 +223,7 @@ public class Potential {
      * @return true if so, false if not
      */
     public boolean isPinOfPotential(Pin pin){
-       //if (wires.contains(pin.getInstance().getPrimitiveSite().getExternalPinWireEnum(pin.getPrimitiveSitePinName()))) return true;
-        if(pins.contains(pin)) return true; //diese Prüfung ist richtig
+        if(pins.contains(pin)) return true;
         return false;
     }
     /**
@@ -270,7 +260,7 @@ public class Potential {
 
     /**
      * Literally spoken: connects the two potentials electrically; this means, they are then the same potential.
-     * If the potential should be fused with itself (incorrect bevhaviour), null is returned
+     * If the potential should be fused with itself (incorrect behaviour), null is returned
      * @param other the removed Potential
      */
     private Potential fuse(Potential other){
@@ -292,10 +282,10 @@ public class Potential {
         }
 
     /**
-     * NEVER actively use this method! It is only there to be called from the method DesignPotentials.fuse. We could not
-     * make up how to solve this properly (public, protected, private, no modifier are not the right solutions)
+     * CAUTION! Only use this method if you can assure that the other potential is removed from all collections which
+     * hold it, since in java it is not possible to delete directly. Think of a wrapper class, for example.
      *
-     * connects this potential with the given potential, by setting/including the given pip.
+     * Connects this potential with the given potential, by setting/including the given pip.
      * This operation fails if the fuse flag of the associated DEisgnPotentials wrapper is not set, indicating that the method
      * has not been called from the designwrapper.fuse() method. This secures that no wrong data structures are kept.
      * In this case, null is returned.
@@ -304,10 +294,7 @@ public class Potential {
      * @assert this.net != other.net
      * @return the activated pip (was the parameter)
      */
- /*   public Potential fuse(Potential other, PIP pip){
-        if(!designWrapper.getFuseFlag()){
-            return null;
-        }
+    public Potential fuse(Potential other, PIP pip){
 
         other.getAdjacentPIPs().remove(pip);
         this.fuse(other);
@@ -316,32 +303,28 @@ public class Potential {
         this.pips.add(pip);
         return this;
     }
-*/
+
     /**
-     * Removes all elements from this potential
+     * Removes all elements from this potential. Note that it cannot be deleted directly, but all references have to be resolved
      */
     public void clear(){
             wires.clear();
             pips.clear();
             adjacentPIPs.clear();
-    //        designWrapper = null;
             this.design = null;
 
-        //TODO check if all dependencies are removed
         }
 
     /**
      * This method includes all wires which are now connected to this potential in this object, and re-adjusts
-     * the "borders" (i.e. pips)
+     * the "borders" (i.e. pips). It is essential to the correct function of this class.
      */
     private void expandAll(){
         Collection<Integer> wiresToAdd = new HashSet<Integer>();
         wiresToAdd.add(-1);
 
         Collection<Tile> tilesToAdd = new HashSet<Tile>();
-        int counter = 0;
         this.checkForNewPins();
-        //logger.info("expandAll() on potential #"+instanceID);
         while(!wiresToAdd.isEmpty() || !tilesToAdd.isEmpty()){
             //logger.info("iteration nr. "+counter);
             wiresToAdd.clear();
@@ -356,7 +339,6 @@ public class Potential {
             tiles.addAll(tilesToAdd);
 
             this.checkForNewPins(wiresToAdd);
-            counter++;
         }
     }
 
@@ -367,17 +349,18 @@ public class Potential {
      * @return
      */
     private Pair<Collection<Integer>, Collection<Tile>> expandOne(){
-        //TODO implement this method based on wires/tiles/whatever offers the best methods
-        int counter = 0;
-
-
 
         // add all wires connected to all known pins
 
         for (Pin pin : pins){
-            int thisPinsConnectedWire =  pin.getInstance().getPrimitiveSite().getExternalPinWireEnum(pin.getName());
+            int thisPinsConnectedWire =   design.getDevice().getPrimitiveExternalPin(pin); //pin.getInstance().getPrimitiveSite().getExternalPinWireEnum(pin.getName());
             wires.add(thisPinsConnectedWire);
             tiles.add(pin.getTile());
+
+            if (design.getDevice().getSwitchMatrixSink(pin)!=null) {
+                wires.add(design.getDevice().getSwitchMatrixSink(pin).getWire());
+                tiles.add(design.getDevice().getSwitchMatrixSink(pin).getTile());
+            }
         }
 
         // add all wires which are connected to pips which are on this potential (both connectors) (and not only one connector = adjacent)
@@ -388,26 +371,25 @@ public class Potential {
             tiles.add(pip.getTile());
         }
 
-        // TODO check beforehand which pips are activated on this net...
 
-        // look at all connections from all wires
+      // something to return
         Set<Integer> wiresToAdd = new HashSet<Integer>();
         Set<Tile> tilesToAdd = new HashSet<Tile>();
+
+        // look at all connections from all wires
         for (int existingWire : wires){
             Collection<PIP> netPIPsWithThisWire = new HashSet<PIP>(); // holds all pips with this wire as start or end point
             for (PIP pip : net.getPIPs()){
                 if (pip.getStartWire()==existingWire || pip.getEndWire()==existingWire){
-                    //The net has got a pip set which has the current wire as start or end point
+                    //The net has got a pip switched on which has the current wire as start or end point
                     netPIPsWithThisWire.add(pip);
                    // tiles.add(pip.getTile()); // not sure if this is necessary
                 }
             }
-            // then look outgoing from every pin the potential kno, how far it reaches
+            // then look outgoing from every tile of the potential know how far it reaches
 
             for (Tile tile : tiles){
-            //for (Pin existingPin : pins) {
-                // all coennctions which can be reched from this pin/this pin's wire
-               // WireConnection[] existingConnectionsForExistingWire = existingPin.getInstance().getTile().getWireConnections(existingWire);
+                // all connections which can be reached from this pin/this pin's wire
                 WireConnection[] existingConnectionsForExistingWire = tile.getWireConnections(existingWire);
                 if (existingConnectionsForExistingWire!= null){
                     for (WireConnection wc : existingConnectionsForExistingWire) {
@@ -419,7 +401,7 @@ public class Potential {
                             tilesToAdd.add(tile);
                         }
                         if (wc.isPIP()) {
-                            // wire would have to be set to be reached. check if it is set in next steps
+                            // wire would have to be switched on (is pip) to be reached. check if it is switched on in next steps
                             boolean isAdjacent = true;
                             for (PIP pip : netPIPsWithThisWire) {
                                 // for every pip which is set in this net with the current wire at at least one end,
@@ -451,6 +433,7 @@ public class Potential {
                 }
             }
         }
+        // do not add yet contained elements
         wiresToAdd.removeAll(wires);
         tilesToAdd.removeAll(tiles);
 
@@ -492,8 +475,6 @@ public class Potential {
             for (Pin pin : inst.getPins()){
                 int pinWireEnumFromName= pin.getInstance().getPrimitiveSite().getExternalPinWireEnum(pin.getName());
                // int pinWireEnumFromSiteName = pin.getInstance().getPrimitiveSite().getExternalPinWireEnum(pin.getPrimitiveSitePinName());
-                String pinName = pin.getName();
-                String pinSiteName = pin.getPrimitiveSitePinName();
                 if (pinWireEnumFromName==wire){
                     if (newPins.add(pin)) {
                         //logger.info("new pin discovered - " + pin + " ,tile:"+ inst.getTile()+" netSource: " + net.getSource() + " potential " + instanceID);
@@ -502,10 +483,6 @@ public class Potential {
             }
         }
         return newPins;
-    }
-
-    private Collection<Pin> getAllConnectedPinsAlternative(Integer wire){
-        return null;
     }
 
     /**
@@ -551,6 +528,11 @@ public class Potential {
         this.expandAll();
     }
 
+    /**
+     * Checks if the given pins wire points to this potential.
+     * @param pin
+     * @return
+     */
     public Boolean checkIfWirePointsToPin(Pin pin){
         pin.getTile();
         int pinWire = this.design.getDevice().getPrimitiveExternalPin(pin);
@@ -564,6 +546,7 @@ public class Potential {
         return false;
     }
 
+    /*
     public Collection<Integer> getWireOfWire(Pin pin){
         Collection<Integer> wires = new HashSet<Integer>();
      //   for(Tile t : this.design.getDevice().getTiles()){
@@ -581,6 +564,8 @@ public class Potential {
 
         return wires;
     }
+    */
+
 
     /* ########################################
                   static methods
@@ -596,6 +581,14 @@ public class Potential {
 
     }
 
+    /* ##########################################
+   gle translate
+     #############################################*/
+    /**
+     * A utility class representing a pair.
+     * @param <A> a the first element
+     * @param <B> b the second element
+     */
     private class Pair<A, B> {
         private A a;
         private B b;

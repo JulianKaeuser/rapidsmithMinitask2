@@ -11,6 +11,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
+ *
+ * DEprecated!
+ *
+ *
  * Created by Julian Käuser on 20.09.17.
  * A DesignPotentials object holds all Potentials which are present in a Design. This is independent of the being routed or not.
  * The DesignPotentials object associates the potentials with their design and links them. Additionally,
