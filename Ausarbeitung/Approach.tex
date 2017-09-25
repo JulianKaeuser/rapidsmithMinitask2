@@ -30,7 +30,7 @@ A Tile is one of the checkerboard-like distributed areas on an FPGA. It holds va
 \section{Isoelectric Potential Search}
 \label{sec:isolectricelements}
 
-Each design's routing in RapidSmith can be viewed as a set of \texttt{Net} objects. According to the RapidSmith documentation \cite{techDoc}, these \texttt{Net} objects hold all used pins and pips of the net.
+Each design's routing in RapidSmith can be viewed as a set of \texttt{Net} objects. According to the RapidSmith documentation \cite{rapidsmith}, these \texttt{Net} objects hold all used pins and pips of the net.
 Therefore it should be possible to reach all sink pins of a net by following wires connected to the input pin if the net is not broken.
 Consequently each design is broken if it is not possible to reach the output pins of an net from the input pin.  
 
@@ -65,11 +65,10 @@ Before any further operation on a \texttt{Potential} may be performed, its spati
 			}
 	   	}
 	  }
-	}
-	
-		\ForEach{wire i}{
+	}	
+	\ForEach{wire i}{
 		add connected pin to pins;\\
-		}
+	}
  \caption{Algorithm to determine all elements on one isoelectric potential.}
  \label{alg:findingpotential}
 \end{algorithm}
@@ -88,37 +87,32 @@ Before any further operation on a \texttt{Potential} may be performed, its spati
 The concept of isoelectric potentials is chosen because the search for adjacent pips wire by wire is simplified this way.
 
 
-
+\newpage
 \section{Finding and Reparing broken Nets}
 \label{sec:findingandrepairingbrokennets}
 
 In order to check if an net is broken the potential of each pin is calculated and compared. If the net contains more than one unique potential then the net is broken.
 In that case it is necessary to reconnect the two parts (potentials) of that net. If the assumption that only one or two PIPs are missing is true, this can be done by the applying the following breadth-first-search on the \texttt{Potential}s of pins A and B:
 
-There is a priority queue with the name \textit{leaves} which holds only PIP-elements that do not connect to other potential besides B. 
-Each of these elements has a parent PIP which introduced the PIP into the queue. \textit{leaves} is ordered by the number of parents between the PIP and Potential A in ascending order.
+There is a priority queue \textit{leaves} which holds only PIP-elements that do not connect to other \texttt{Potential}s besides B. 
+Each of these elements has a parent PIP which introduced the PIP into the queue. \textit{Leaves} is ordered by the number of parents between the PIP and Potential A in ascending order. Algorithm \ref{alg:breadth-first-search} points out the search on that priority queue.
 
 \begin{algorithm}[h]
-	leaves.addAll(potenialA.getAdjacentPIPs());\\
+	add all adjacent PIPs of A to leaves;\\
 	\While{leaves.size() > 0}{
-		PIPElement pip = leaves.pop(); \\
-		\If{potenialB.isPIPOfPotential(pip)}{
+		PIP pip = leaves.pop(); \\
+		\If{Potential B contains pip}{
 			return pip; // we can determine the connection trough the parent PIPs
 		}
 		\ForEach{PIP p in pip.getAdjacentPIPs}{
 			If{p!=pip.parent}
-				leaves.push(p); //if p is of an other potenial then B we can not add it 
+				leaves.push(p); //if p is of an other potential than B we cannot add it 
 		}
 	}
  \caption{Exemplary algorithm to determine missing PIPs by breadth-first-search}
  \label{alg:breadth-first-search}
 \end{algorithm}
 
-
-While \textit{leaves} not empty do:
-	Get first PIP of \textit{leaves}
-	If PIP has Potential B then done
-	Add all adjecenten PIPs to leaves
 
 Figure \ref{fig:brokenpotentials} shows the case for one non-set PIP in a net. The net specifies two pins, A and B. For both pins, the \texttt{Potential} has been determined. Clearly marked are the included wires, PIPs and other pins. PIP 215 is adjacent to both potentials. The breadth-first-search finds PIP 215 to be adjacent to both pins' potentials, so this PIP has to be set (a \texttt{PIP} instance is created for the conencted \texttt{wires} and added to the net). For situations where more than one PIP has to be set, the breadth-first-search steps one level down the search tree and repeats the search on every leaf. By going one level deeper, the first PIP in the priority queue has to be set.
 

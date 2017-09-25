@@ -1,54 +1,58 @@
 \chapter{Conclusion}
 \label{cha:conclusion}
 
-In conclusion it seems that there is currently no possibility to determine the exact properties of an net with RapidSmith based on the '"xdl'" files. Therefore there is no way to determine which net might be broken or fix the broken design.
+The goal of this project was to determine and repair nets which are corrupted after a module re-placement due to slight irregularities in the FPGA fabric. This goal could partially be met. The analysis of corrupted nets is functional; although there is a method to fix the errors, we suggest a re-routing of the nets, because our solution is not applicable for the encountered error sources.
+
+Our approach is based on isoelectric potentials, on which a breadth-first search finds missing interconnect elements. As pointed out in chapters \ref{cha:approachestotheproblem} and \ref{cha:insights}, the basic approach has correct results. Nevertheless, the errors encountered in the conflicting nets have shown to be of a kind which is not applicable to the breadth-first-search as solution. 
+
+In conclusion it seems that there is currently no possibility to determine the exact properties of an net with RapidSmith based on the \texttt{.xdl} files. Corrupted nets can be found, but inconsistencies with the further processing complicate the possibility to distinguish between functional and corrupted nets.
 During our experiments with the RapidSmith hand router we started to suspect that our database might be to small. Most nets, even those of not broken designs e.g. designs that can be used without a problem by the ISE tool-chain, contain no wires or other elements connecting the pins with each other. The few Nets that are connected are usually of a rather simplistic manner.
 %Alternatively there is the possibility that RapidSmith might not be able
-Alternatively there is the slim possibility of bugs within RapidSmith. While we did not encounter any evidence for bugs we must note that the RapidSmith version used in this Project showed some differences to the publicly available version on http://rapidsmith.sourceforge.net/. While most of this differences seem to be improvements, for example the wireEnumerator was upgraded by one version, it should also be noted that the GUI seems to be missing files.
+It should be noted that there is the slim possibility of bugs within RapidSmith. While we did not encounter any evidence for bugs we must note that the RapidSmith version used in this project showed some differences to the publicly available version on http://rapidsmith.sourceforge.net/. While most of these differences seem to be improvements, for example the wireEnumerator was upgraded by one version, it should also be noted that the GUI seems to be missing files.
 
-All things consider we recommend to use the algorithmic approach of this work with a bigger dataset or an alternative tool.
+All things considered, we recommend to use the algorithmic approach of this work with a bigger dataset or an alternative tool. For the meanwhile, we recommend to use a re-routing in case of error, because it is probably better than the suggested approach.
 
+%
+ % http://rapidsmith.sourceforge.net/papers/Nelson-FPL11-Presentation.pdf
 
-  http://rapidsmith.sourceforge.net/papers/Nelson-FPL11-Presentation.pdf
+%We suspect As shown in REF are X to Y big and ours are simply
 
-We suspect As shown in REF are X to Y big and ours are simply
+%the task was to
+%- examine re-placed designs' net lists
 
-the task was to
-- examine re-placed designs' net lists
+%- find out if something does not work
 
-- find out if something does not work
+%- expected: only one or two PIPs are missing due to irreguar structure 
+%of FPGA
 
-- expected: only one or two PIPs are missing due to irreguar structure 
-of FPGA
-
-- if problem is encountered, find rule/mask based method to fix these 
-missing pips
-
-
-what we did was:
-
-- handle net by net 
-
-- for each Pin, determine all elements of the isoelectric it is 
-connected to (class potential)
-
-- checking method: if (potential(source)!=potential(sink) -> broken
+%- if problem is encountered, find rule/mask based method to fix these 
+%missing pips
 
 
-- for broken nets:
+%what we did was:
 
- - search isoelectric of source, sink for adjacent, non-set PIPs 
-(interesction of sets). if !=empty set, activate this pip
+%- handle net by net 
+
+%- for each Pin, determine all elements of the isoelectric it is 
+%connected to (class potential)
+
+%- checking method: if (potential(source)!=potential(sink) -> broken
 
 
-- why it did not work:
+%- for broken nets:
 
-  - even for correct (in terms of make file) nets, the method fails
+% - search isoelectric of source, sink for adjacent, non-set PIPs 
+%(interesction of sets). if !=empty set, activate this pip
 
-  - hand routing (function of RapidSmith framework) neither does
 
-  - we suspect missing information in fabric;
+%- why it did not work:
 
-  - according to the hand router, the method of "isoelectric search" 
+%  - even for correct (in terms of make file) nets, the method fails
 
-results in correct sub nets; might be useful for later work
+%  - hand routing (function of RapidSmith framework) neither does
+
+%  - we suspect missing information in fabric;
+
+%  - according to the hand router, the method of "isoelectric search" 
+
+%results in correct sub nets; might be useful for later work
