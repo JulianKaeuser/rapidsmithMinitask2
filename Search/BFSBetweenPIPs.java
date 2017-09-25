@@ -1,4 +1,4 @@
-package BreadthFirstSearch;
+package Search;
 
 import edu.byu.ece.rapidSmith.design.Design;
 import edu.byu.ece.rapidSmith.design.Net;
@@ -9,6 +9,7 @@ import minitask_2.Potential;
 import java.util.*;
 
 /**
+ * Experimental, use with care
  * Created by theChaoS on 18.09.2017.
  */
 public class BFSBetweenPIPs {
