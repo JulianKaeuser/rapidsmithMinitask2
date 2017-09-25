@@ -1,7 +1,7 @@
 \chapter{Insights}
 \label{cha:insights}
 
-Although the approach described in chapter \ref{cha:approachestotheproblem} seems promising, testing it with diffrent designs and for various example nets (both conflicting and functional in terms of the ISE \texttt{xdl} output) did not lead to the expected results. Instead of finding exactly one potential per net most nets (more than 90\,\%) contains more than one potential. This behavior occurs regardless whether or not the design can be used by ISE and therefore has not to be rerouted.
+Although the approach described in chapter \ref{cha:approachestotheproblem} seems promising, testing it with different designs and for various example nets (both conflicting and functional in terms of the ISE \texttt{xdl} output) did not lead to the expected results. Instead of finding exactly one potential per net, the most nets contain more than one potential. This behavior occurs regardless whether or not the design can be used by ISE and therefore has not to be rerouted.
 Therefore, we examined the reasons, implementation and other possible error sources that may lead to this behavior.
 
 \section{Hand Routing}
@@ -9,7 +9,7 @@ Therefore, we examined the reasons, implementation and other possible error sour
 
 The RapidSmith framework has some built-in example classes, which are designed to help the user understand the way RapidSmith works. One of these classes is the \texttt{HandRouter}, which allows the routing of a net through a console. It displays reachable wires at the next iteration and adds PIPs as the route is chosen. We used and adapted the \texttt{HandRouter} to manually examine broken nets. Working on complete \texttt{.xdl}-files only, we adapted the router to work on single nets, and inserted it after the potential derivation.
 
-Using the HandRouter reveals several error sources, but also that each connection reachable from each pin is correctly integrated in the pin's \texttt{Potential} instance. Therefore, we could prove that, based on the given nets, the concept of isoelectric potentials is implemented correctly. Nevertheless, the potentials of working designs were still not as expected.
+Using the HandRouter reveals several error sources, but also that each connection reachable from each pin is correctly integrated in the pin's \texttt{Potential} instance. Therefore, we could prove that, based on the given nets, the concept of isoelectric potentials is implemented correctly. Nevertheless, the potentials and the routing of working designs were still not as expected.
 
 Further analysis of the reacheable routing elements from every pin revealed that the assumption of only 1 or two missing PIPs between the isoelectric potentials of the sink and source pin evaluated to be wrong. In the most examined cases, at least four or more PIPs not specified by the net have to be additionally switched on. While some of the wire segments where additional PIPs are necessary only feature one or two switcheable PIPs, others had a much longer list. 
 
