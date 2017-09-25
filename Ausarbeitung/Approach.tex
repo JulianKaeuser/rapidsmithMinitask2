@@ -102,11 +102,12 @@ Each of these elements has a parent PIP which introduced the PIP into the queue.
 	\While{leaves.size() > 0}{
 		PIP pip = leaves.pop(); \\
 		\If{Potential B contains pip}{
-			return pip; // we can determine the connection trough the parent PIPs
+			return pip; // we can determine the connection trough the parent PIPs;\\
 		}
-		\ForEach{PIP p in pip.getAdjacentPIPs}{
-			If{p!=pip.parent}
-				leaves.push(p); //if p is of an other potential than B we cannot add it 
+		\ForEach{PIP p \in pip.getAdjacentPIPs}{
+			\If{p!=pip.parent}{
+				leaves.push(p); //if p is of an other potential than B we cannot add it ;\\
+				}
 		}
 	}
  \caption{Exemplary algorithm to determine missing PIPs by breadth-first-search}
@@ -114,11 +115,11 @@ Each of these elements has a parent PIP which introduced the PIP into the queue.
 \end{algorithm}
 
 
-Figure \ref{fig:brokenpotentials} shows the case for one non-set PIP in a net. The net specifies two pins, A and B. For both pins, the \texttt{Potential} has been determined. Clearly marked are the included wires, PIPs and other pins. PIP 215 is adjacent to both potentials. The breadth-first-search finds PIP 215 to be adjacent to both pins' potentials, so this PIP has to be set (a \texttt{PIP} instance is created for the conencted \texttt{wires} and added to the net). For situations where more than one PIP has to be set, the breadth-first-search steps one level down the search tree and repeats the search on every leaf. By going one level deeper, the first PIP in the priority queue has to be set.
+Figure \ref{fig:brokenpotentials} shows the case for one non-set PIP in a net. The net specifies two pins, A and B. For both pins, the \texttt{Potential} has been determined. Clearly marked are the included wires, PIPs and other pins. PIP 215 is adjacent to both potentials. The breadth-first-search finds PIP 215 to be adjacent to both pins' potentials, so this PIP has to be set (a \texttt{PIP} instance is created for the connected \texttt{wires} and added to the net). For situations where more than one PIP has to be set, the breadth-first-search steps one level down the search tree and repeats the search on every leaf. By going one level deeper, the first PIP in the priority queue has to be set.
 
 As one can see, the breadth-first search runtime highly depends on the number of missing PIPs in the net. For every missing PIP, the number of elements to search is multiplied by the amount of adjacent PIPs to the Potential.
 
-\begin{figure}
+\begin{figure}[h]
 \centering
 \includegraphics[scale=0.65]{images/brokenpotentials.pdf}
 \caption{A net with two \texttt{Potentials} which have to be connected.}
