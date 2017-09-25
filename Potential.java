@@ -546,6 +546,47 @@ public class Potential {
         return false;
     }
 
+    /**
+     * Overrides the equals method for the purpose of the class
+     * @param other
+     * @return
+     */
+    public boolean equals(Potential other){
+
+        for (PIP pip : this.getPIPs()){
+            if (!other.isPIPOfPotential(pip)){
+                return false;
+            }
+        }
+        for (PIP pip : this.adjacentPIPs){
+            if(!other.getAdjacentPIPs().contains(pip)){
+                return false;
+            }
+        }
+        for (int wire : this.wires){
+            if(!other.wires.contains(wire)){
+                return false;
+            }
+        }
+        for (Pin pin : pins){
+            if(!other.getPins().contains(pin)){
+                return false;
+            }
+        }
+        for (Tile tile : this.getTiles()){
+            if(!other.getTiles().contains(tile)){
+                return false;
+            }
+        }
+        if(!this.net.equals(other.getNet())){
+            return false;
+        }
+        if(!this.design.equals(other.design)){
+            return false;
+        }
+        return true;
+    }
+
     /*
     public Collection<Integer> getWireOfWire(Pin pin){
         Collection<Integer> wires = new HashSet<Integer>();
