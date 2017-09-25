@@ -12,7 +12,8 @@ import java.util.Set;
 
 /**
  *
- * DEprecated!
+ * Deprecated! DO  NOT USE!
+ * is only left for possible re-use (and reuse of methods)
  *
  *
  * Created by Julian Käuser on 20.09.17.
