@@ -18,7 +18,7 @@ It is suspected that a corrupted part of the FPGA only contains a small amount o
 \section{Framework and Environment}
 \label{sec:frameworkandenvironment}
 
-This project is embedded into the RapidSmith Java environment, version a.b.c. It uses classes of the RapidSoC system. Especially the class \texttt{MoveModulesEverywhere} acts as the basis of our work. \texttt{MoveModulesEverywhere} parses existing designs from \texttt{.xdl} files into the RapidSmith environment, places the included modules on any feasible destination, and generates the corresponding \texttt{.xdl} output files. Further processing is accomplished with Xilinx ISE \cite{ise}. Based on the output of the ISE tool \texttt{xdl}, the re-placed designs can be evaluated to be functional or conflicting.
+This project is embedded into the RapidSmith Java environment, provided by the RS lab. It uses classes of the RapidSoC system. Especially the class \texttt{MoveModulesEverywhere} acts as the basis of our work. \texttt{MoveModulesEverywhere} parses existing designs from \texttt{.xdl} files into the RapidSmith environment, places the included modules on any feasible destination, and generates the corresponding \texttt{.xdl} output files. Further processing is accomplished with Xilinx ISE \cite{ise}. Based on the output of the ISE tool \texttt{xdl}, the re-placed designs can be evaluated to be functional or conflicting.
 
 All processing developed in this project is performed in a separate Java package. Every re-placed design is extracted and examined before the output step, so that the developed methods can be applied to a RapidSmith \texttt{Design} object.
 
