@@ -1,18 +1,23 @@
 \chapter{Insights}
 \label{cha:insights}
 
-Although the approach described in chapter \ref{cha:approachestotheproblem} seems promising, testing it for various example nets (conflicting and functional in terms of the ISE \texttt{xdl} output) did not lead to the expected results. Therefore, we examined the reasons, implementation and other possible error sources.
+Although the approach described in chapter \ref{cha:approachestotheproblem} seems promising, testing it with diffrent designs and for various example nets (both conflicting and functional in terms of the ISE \texttt{xdl} output) did not lead to the expected results. Instead of finding exactly one potential per net most nets (more than 90\,\%) contains more than one potential. This behavior occurs regardless whether or not the design can be used by ISE and therefore has not to be rerouted.
+Therefore, we examined the reasons, implementation and other possible error sources that may lead to this behavior.
 
 \section{Hand Routing}
 \label{sec:handrouting}
 
-The RapidSmith framework has some built-in example classes, which are designed to help the user understand the way RapidSmith works. One of these classes is the \texttt{HandRouter}, which allows the routing of a net through a console. It displays reacheable wires at the next iteration and adds PIPs as the route is chosen. We used and adapted the \texttt{HandRouter} to manually examine broken nets. Working on complete \texttt{.xdl}-files only, we adapted the router to work on single nets, and inserted it after the potential derivation.
+The RapidSmith framework has some built-in example classes, which are designed to help the user understand the way RapidSmith works. One of these classes is the \texttt{HandRouter}, which allows the routing of a net through a console. It displays reachable wires at the next iteration and adds PIPs as the route is chosen. We used and adapted the \texttt{HandRouter} to manually examine broken nets. Working on complete \texttt{.xdl}-files only, we adapted the router to work on single nets, and inserted it after the potential derivation.
 
-Using the HandRouter reveals several error sources, but also that each connection reacheable from each pin is correctly integrated in the pin's \texttt{Potential} instance. Therefore, we could prove that, based on the given nets, the concept of isoelectric potentials is implemented correctly. Nevertheless, the errors still occurred.
+Using the HandRouter reveals several error sources, but also that each connection reachable from each pin is correctly integrated in the pin's \texttt{Potential} instance. Therefore, we could prove that, based on the given nets, the concept of isoelectric potentials is implemented correctly. Nevertheless, the potentials of working designs were still not as expected.
 
 Further analysis of the reacheable routing elements from every pin revealed that the assumption of only 1 or two missing PIPs between the isoelectric potentials of the sink and source pin evaluated to be wrong. In the most examined cases, at least four or more PIPs not specified by the net have to be additionally switched on. While some of the wire segments where additional PIPs are necessary only feature one or two switcheable PIPs, others had a much longer list. 
 
-Therefore, we decided not to apply the breadth-first-search and propose to perform a re-routing of the net. Any router has to solve the problem of too many possible connections on the route to take. The breadth-first-search is suitable for search trees of one or two levels, but it is probably bad compared to a distinct router able of finding routes with a larger number of PIPs.
+Therefore we were not able to determine which net is broken and therefore were not able to apply the breadth-first-search algorithm. In order to fix a design we would have to apply the algorithm on nearly every net of the design.  The breadth-first-search is suitable for search trees of one or two levels, in order to fulfill the purpose of this work, to save time during development, it is advisable to use a router able to solve the problem of many possible connections and a a larger number of PIPs.
+
+
+%TODO: das gehört hier net hin
+%Therefore, we decided not to apply the breadth-first-search and propose to perform a re-routing of the net. Any router has to solve the problem of too many possible connections on the route to take. The breadth-first-search is suitable for search trees of one or two levels, but it is probably bad compared to a distinct router able of finding routes with a larger number of PIPs.
 
 
 \section{Possible Reasons for Errors}
@@ -20,11 +25,12 @@ Therefore, we decided not to apply the breadth-first-search and propose to perfo
 
 The number of missing PIPs leads us to the assumption that the errors in re-placed designs or nets are not completely caused by small irregularities in the FPGA fabric. RapidSmith features a coordinate-based location description of nearly all elements of the FPGA. While this is useful for the majority of applications, some details may be hidden in this abstraction. Not every cartesian coordinate perfectly translates into the actual position of the element on the FPGA, so that regular structures in terms of the cartesian coordinates do not necessarily imply regular structures in the fabric. Hence, the assumption of conflicting re-placed nets caused by slight irregularities could not be proven.
 
-In addition to the larger-than-expected irregularities, there are other error sources in RapidSmith. We cannot determine the exact source, but we have to assume that certain information on the FPGA are not implemented correctly. This assumption is made due to the fact even for functional nets (in terms of the \texttt{xdl} conversion), some of the corresponding RapidSmith \texttt{Net}s were not routed correctly (i.e. the source was reacheable from all sink pins).
+In addition to the larger-than-expected irregularities, there are other error sources in RapidSmith. We cannot determine the exact source, but we have reason to assume that certain information on the FPGA are either missing or not correct. This assumption is made due to the fact even for functional nets (in terms of the \texttt{xdl} conversion), some of the corresponding RapidSmith \texttt{Net}s were not routed correctly (i.e. the source was reacheable from all sink pins).
 
 \section{Outcome}
 \label{sec:outcome}
-Within this project, a method to find missing PIPs in re-placed FPGA designs is  developed. Its working principle is based on a breadth-first-search. According to the assumption that only very few PIPs are missing in the nets because of slight irregularities in the FPGA fabric, a breadth-first search is applicable. 
+Within this project, a method to find missing PIPs in re-placed FPGA designs was  developed. Its working principle is based on a breadth-first-search. According to the assumption that only very few PIPs are missing in the nets because of slight irregularities in the FPGA fabric, a breadth-first search is applicable. 
 
-Reviewing the results proves the assumption of only few missing PIPs wrong. The analysis of error sources can be done with the built-in tools of RapidSmith. We suggest the use of a dedicated router to repair the corrupted nets, because it is suited well for connecting elements with a higher amount of interconnect points between them. Of course, our approach to the problem is not the only possible; therefore, other solutions may produce better results.
+TODO DAS UNTEN GEHÖRT HIER NET HIN
+Reviewing the results proves that there is either a problem with RapidSmith or the assumption of only few missing PIPs is wrong. In case that RapidSmith can be ruled out as an error source, we suggest the use of a dedicated router to repair the corrupted nets, because it is suited well for connecting elements with a higher amount of interconnect points between them. Of course, our approach to the problem is not the only possible; therefore, other solutions may produce better results.
 
