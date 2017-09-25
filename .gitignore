@@ -3,3 +3,6 @@
 *.aux
 *.dvi
 *.jpg
+*.tks
+*.blg
+*.bbl
